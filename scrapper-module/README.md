@@ -57,6 +57,7 @@ Po aktywacji na początku linii terminala pojawi się `(venv)`:
 
 ```bash
 pip install -r requirements.txt
+playwright install chromium
 ```
 
 ---
@@ -64,7 +65,7 @@ pip install -r requirements.txt
 ## Krok 4 — Uruchom kolektor (Krok 1: Google News RSS)
 
 ```bash
-python collector/google_news.py
+python scrapper-module/collector/google_news.py
 ```
 
 Zobaczysz coś takiego:
