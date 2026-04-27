@@ -3,10 +3,10 @@ import React from "react";
 const CX = 190;
 const CY = 150;
 const MAX_R = 80;
-const LABEL_R = 120;
+const SCORE_LABEL_R = MAX_R + 2;
 const LEVELS = 4;
 const W = 380;
-const H = 300;
+const H = 320;
 
 function axisAngle(i, n) {
   return (i / n) * 2 * Math.PI - Math.PI / 2;
@@ -26,11 +26,54 @@ function textAnchor(a) {
   return x > 0 ? "start" : "end";
 }
 
+function dominantBaseline(a) {
+  const y = Math.sin(a);
+  if (Math.abs(y) < 0.15) return "middle";
+  return y > 0 ? "hanging" : "auto";
+}
+
+function scoreLabelPt(a) {
+  return polarPt(a, SCORE_LABEL_R);
+}
+
 function splitName(name) {
   const words = name.split(" ");
   if (words.length <= 1) return [name, null];
   const mid = Math.ceil(words.length / 2);
   return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+}
+
+function labelLayout(a) {
+  const x = Math.cos(a);
+  const y = Math.sin(a);
+
+  if (Math.abs(x) < 0.2) {
+    return {
+      textAnchor: "middle",
+      xOffset: 0,
+      yOffset: y < 0 ? -22 : 22,
+      lineGap: 12,
+    };
+  }
+
+  return {
+    textAnchor: x > 0 ? "start" : "end",
+    xOffset: x > 0 ? 18 : -18,
+    yOffset: y < 0 ? -10 : 10,
+    lineGap: 12,
+  };
+}
+
+function labelLineY(baseY, layout, lineIndex, lineCount) {
+  if (lineCount === 1) {
+    return baseY;
+  }
+
+  if (layout.textAnchor === "middle") {
+    return baseY + (lineIndex === 0 ? -6 : 6);
+  }
+
+  return baseY + (lineIndex - (lineCount - 1) / 2) * layout.lineGap;
 }
 
 export default function RadarChart({ categories }) {
@@ -93,47 +136,52 @@ export default function RadarChart({ categories }) {
         />
       ))}
 
-      {/* Score values near each dot */}
-      {dataPoints.map(({ r }, i) => {
+      {/* Category name labels at each axis tip */}
+      {categories.map((cat, i) => {
         const a = angles[i];
-        const nudge = Math.max(r + 13, 18);
-        const sp = polarPt(a, nudge);
+        const scorePt = scoreLabelPt(a);
+        const layout = labelLayout(a);
+        const labelX = scorePt.x + layout.xOffset;
+        const labelY = scorePt.y + layout.yOffset;
+        const lines = splitName(cat.name).filter(Boolean);
         return (
           <text
             key={i}
-            x={sp.x.toFixed(1)}
-            y={sp.y.toFixed(1)}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize="10"
-            fontWeight="600"
-            fill="#1d4ed8"
+            x={labelX.toFixed(1)}
+            y={labelY.toFixed(1)}
+            textAnchor={layout.textAnchor}
+            fontSize="11"
+            fill="#374151"
           >
-            {categories[i].score}
+            {lines.map((line, lineIndex) => (
+              <tspan
+                key={`${cat.id ?? i}-${lineIndex}`}
+                x={labelX.toFixed(1)}
+                y={labelLineY(labelY, layout, lineIndex, lines.length).toFixed(1)}
+              >
+                {line}
+              </tspan>
+            ))}
           </text>
         );
       })}
 
-      {/* Category name labels at each axis tip */}
+      {/* Score values pinned to the outer chart edges */}
       {categories.map((cat, i) => {
         const a = angles[i];
-        const lp = polarPt(a, LABEL_R);
-        const ta = textAnchor(a);
-        const [l1, l2] = splitName(cat.name);
+        const sp = scoreLabelPt(a);
         return (
-          <text key={i} x={lp.x.toFixed(1)} y={lp.y.toFixed(1)} textAnchor={ta} fontSize="11" fill="#374151">
-            {l2 ? (
-              <>
-                <tspan x={lp.x.toFixed(1)} dy="-0.65em">
-                  {l1}
-                </tspan>
-                <tspan x={lp.x.toFixed(1)} dy="1.3em">
-                  {l2}
-                </tspan>
-              </>
-            ) : (
-              <tspan dominantBaseline="middle">{l1}</tspan>
-            )}
+          <text
+            key={cat.id ?? i}
+            x={sp.x.toFixed(1)}
+            y={sp.y.toFixed(1)}
+            textAnchor={textAnchor(a)}
+            dominantBaseline={dominantBaseline(a)}
+            fontSize="10"
+            fontWeight="700"
+            fill="#1d4ed8"
+          >
+            {cat.score}
           </text>
         );
       })}
