@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/playwright/python:v1.58.0-jammy
 
-WORKDIR /collector
+WORKDIR /app/collector
 
 COPY collector/requirements.txt .
 RUN pip install -r requirements.txt

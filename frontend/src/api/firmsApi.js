@@ -37,7 +37,7 @@ function normalizeScore(raw) {
 function buildDetails(company, rawScore) {
   const aliases = company.aliases?.map((a) => a.name).join(", ");
   const suffix = aliases ? ` Also known as: ${aliases}.` : "";
-  if (rawScore == null) return suffix.trim() || `NIP: ${company.nip}`;
+  if (rawScore == null) return suffix.trim() || (company.nip ? `NIP: ${company.nip}` : "Brak danych scoringowych.");
   if (rawScore > 20) return `Positive reputation signals.${suffix}`;
   if (rawScore > 0) return `Mostly positive signals.${suffix}`;
   if (rawScore > -20) return `Mixed reputation signals.${suffix}`;

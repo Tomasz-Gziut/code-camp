@@ -9,7 +9,7 @@ class Company(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     full_name = Column(String(255), nullable=False)
-    nip = Column(String(20), unique=True, nullable=False)
+    nip = Column(String(20), unique=True, nullable=True)
 
     aliases = relationship("CompanyAlias", back_populates="company", cascade="all, delete-orphan")
     identifiers = relationship("CompanyIdentifier", back_populates="company", cascade="all, delete-orphan")

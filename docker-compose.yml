@@ -29,10 +29,15 @@ services:
 
   scrapper:
     build: ./scrapper-module
-    ports:
-      - "8001:8000"
     volumes:
-      - ./scrapper-module:/app
+      - ./scrapper-module/collector:/app/collector
+    environment:
+      - BACKEND_URL=http://backend:8000
+      - AUTO_PUSH_TO_BACKEND=1
+      - IMPORT_MAX_ATTEMPTS=30
+      - IMPORT_RETRY_DELAY_SECONDS=2
+    depends_on:
+      - backend
 
   db:
     image: postgres:16-alpine

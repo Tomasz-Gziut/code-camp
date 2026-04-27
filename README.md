@@ -67,3 +67,17 @@ docker compose logs -f
 curl http://localhost:8000/health
 curl http://localhost:8000/companies
 ```
+
+## Detekcja firmy z artykułu
+
+Backend ma endpoint do mapowania artykułu na firmę z bazy na podstawie
+`full_name` i aliasów:
+
+```bash
+curl -X POST "http://localhost:8000/articles/detect-company" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"title\":\"Kontrola KNF w PKO BP\",\"content\":\"KNF wszczela kontrole procedur kredytowych w PKO Banku Polskim.\"}"
+```
+
+To nie jest czysty NER. Endpoint dopasowuje tekst do znanych spółek i zwraca
+`best_match` oraz listę `candidates` z punktacją.
