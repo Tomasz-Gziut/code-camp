@@ -27,22 +27,21 @@ cd code-camp
 **Windows (PowerShell / CMD):**
 
 ```bash
-python -m venv scrapper-module/venv
+python -m venv venv
 venv\Scripts\activate
 ```
 
 **Windows (Git Bash):**
 
 ```bash
-python -m venv scrapper-module/venv
-cd scrapper-module
+python -m venv venv
 source venv/Scripts/activate
 ```
 
 **macOS / Linux:**
 
 ```bash
-python -m venv scrapper-module/venv
+python -m venv venv
 source venv/bin/activate
 ```
 
@@ -58,6 +57,7 @@ Po aktywacji na początku linii terminala pojawi się `(venv)`:
 
 ```bash
 pip install -r requirements.txt
+playwright install chromium
 ```
 
 ---
@@ -65,7 +65,7 @@ pip install -r requirements.txt
 ## Krok 4 — Uruchom kolektor (Krok 1: Google News RSS)
 
 ```bash
-python collector/google_news.py
+python scrapper-module/collector/google_news.py
 ```
 
 Zobaczysz coś takiego:
