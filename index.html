@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Firm Safety Checker (Mock)</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f19;
+        --card: #111827;
+        --muted: #94a3b8;
+        --text: #e5e7eb;
+        --border: rgba(148, 163, 184, 0.2);
+        --purple: #a855f7;
+        --purple2: #7c3aed;
+        --low: #22c55e;
+        --med: #eab308;
+        --high: #f97316;
+        --vhigh: #ef4444;
+        --focus: rgba(168, 85, 247, 0.45);
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f8fafc;
+          --card: #ffffff;
+          --muted: #64748b;
+          --text: #0f172a;
+          --border: rgba(15, 23, 42, 0.12);
+          --focus: rgba(124, 58, 237, 0.25);
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+          "Segoe UI Emoji";
+        background: radial-gradient(1200px 800px at 10% 0%, color-mix(in oklab, var(--purple2) 35%, transparent), transparent
+              55%),
+          radial-gradient(900px 700px at 90% 10%, color-mix(in oklab, var(--purple) 26%, transparent), transparent 50%),
+          var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 860px;
+        padding: 28px 18px 54px;
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 26px;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+      }
+      .sub {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .card {
+        background: color-mix(in oklab, var(--card) 92%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        backdrop-filter: blur(10px);
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      input[type="search"] {
+        width: min(520px, 100%);
+        border: 1px solid var(--border);
+        background: color-mix(in oklab, var(--card) 86%, transparent);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 12px 12px;
+        outline: none;
+        font-size: 15px;
+      }
+      input[type="search"]:focus {
+        border-color: color-mix(in oklab, var(--text) 20%, var(--border));
+        box-shadow: 0 0 0 4px var(--focus);
+      }
+      .hint {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 16px 0;
+      }
+      .resultsHeader {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .resultsHeader h2 {
+        margin: 0;
+        font-size: 16px;
+      }
+      .count {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+      }
+      .firmLi {
+        list-style: none;
+      }
+      .item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: color-mix(in oklab, var(--card) 88%, transparent);
+      }
+      .itemLink {
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        font: inherit;
+        color: inherit;
+        text-decoration: none;
+      }
+      .itemLink:hover {
+        border-color: color-mix(in oklab, var(--purple) 35%, var(--border));
+        background: color-mix(in oklab, var(--purple2) 8%, var(--card));
+      }
+      .itemLink:focus {
+        outline: none;
+      }
+      .itemLink:focus-visible {
+        box-shadow: 0 0 0 4px var(--focus);
+      }
+      .pageHeader {
+        margin-bottom: 18px;
+      }
+      .backLink {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: color-mix(in oklab, var(--purple) 85%, var(--text));
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 650;
+        width: fit-content;
+      }
+      .backLink:hover {
+        text-decoration: underline;
+      }
+      .firmTop {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .firmSummary {
+        min-width: 0;
+      }
+      .right {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      .name {
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 2px;
+      }
+      .left {
+        min-width: 0;
+      }
+      .badge {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 650;
+        border: 1px solid var(--border);
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+      .lowRisk {
+        color: color-mix(in oklab, var(--low) 92%, var(--text));
+        border-color: color-mix(in oklab, var(--low) 40%, var(--border));
+        background: color-mix(in oklab, var(--low) 16%, transparent);
+      }
+      .lowRisk .dot {
+        background: var(--low);
+      }
+      .medRisk {
+        color: color-mix(in oklab, var(--med) 92%, var(--text));
+        border-color: color-mix(in oklab, var(--med) 44%, var(--border));
+        background: color-mix(in oklab, var(--med) 16%, transparent);
+      }
+      .medRisk .dot {
+        background: var(--med);
+      }
+      .highRisk {
+        color: color-mix(in oklab, var(--high) 92%, var(--text));
+        border-color: color-mix(in oklab, var(--high) 44%, var(--border));
+        background: color-mix(in oklab, var(--high) 16%, transparent);
+      }
+      .highRisk .dot {
+        background: var(--high);
+      }
+      .vhighRisk {
+        color: color-mix(in oklab, var(--vhigh) 92%, var(--text));
+        border-color: color-mix(in oklab, var(--vhigh) 44%, var(--border));
+        background: color-mix(in oklab, var(--vhigh) 16%, transparent);
+      }
+      .vhighRisk .dot {
+        background: var(--vhigh);
+      }
+      .score {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .meter {
+        width: 88px;
+        height: 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: color-mix(in oklab, var(--card) 76%, transparent);
+        overflow: hidden;
+      }
+      .meterFill {
+        display: block;
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--vhigh), var(--high), var(--med), var(--low));
+      }
+      .panel {
+        margin-top: 8px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: color-mix(in oklab, var(--card) 86%, transparent);
+      }
+      .panelTitle {
+        font-size: 13px;
+        font-weight: 650;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .catList {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 10px;
+      }
+      .catRow {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: color-mix(in oklab, var(--card) 88%, transparent);
+      }
+      .catLeft {
+        min-width: 0;
+      }
+      .catRight {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+        flex: 0 0 auto;
+      }
+      .catName {
+        font-weight: 650;
+        letter-spacing: -0.01em;
+      }
+      .catDetail {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 2px;
+      }
+      .empty {
+        padding: 14px 12px;
+        border-radius: 12px;
+        border: 1px dashed var(--border);
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .footerNote {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      mark {
+        background: color-mix(in oklab, color-mix(in oklab, var(--purple) 55%, transparent) 60%, transparent);
+        color: inherit;
+        padding: 0 0.1em;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
