@@ -107,6 +107,7 @@ export default function RadarChart({
   categories,
   variant = "full",
   emphasized = false,
+  accentColor = "#3b82f6",
   ariaLabel = "Radar chart of category scores",
 }) {
   const n = categories.length;
@@ -142,6 +143,8 @@ export default function RadarChart({
     geometry.cx,
     geometry.cy
   );
+  const miniFill = accentColor;
+  const miniStroke = accentColor;
 
   return (
     <svg
@@ -182,17 +185,11 @@ export default function RadarChart({
 
       <polygon
         points={ptStr(orderedDataPoints)}
-        fill={isMini
-          ? emphasized
-            ? "color-mix(in oklab, var(--purple2) 34%, transparent)"
-            : "color-mix(in oklab, var(--text) 12%, transparent)"
-          : "rgba(59,130,246,0.15)"}
-        stroke={isMini
-          ? emphasized
-            ? "color-mix(in oklab, var(--purple) 88%, white)"
-            : "color-mix(in oklab, var(--text) 34%, transparent)"
-          : "#3b82f6"}
-        strokeWidth={isMini ? (emphasized ? "2.4" : "1.6") : "2"}
+        fill={isMini ? miniFill : "rgba(59,130,246,0.15)"}
+        stroke={isMini ? miniStroke : "#3b82f6"}
+        fillOpacity={isMini ? (emphasized ? "0.24" : "0.12") : undefined}
+        strokeOpacity={isMini ? (emphasized ? "0.98" : "0.72") : undefined}
+        strokeWidth={isMini ? (emphasized ? "2.4" : "1.7") : "2"}
         strokeLinejoin="round"
       />
 

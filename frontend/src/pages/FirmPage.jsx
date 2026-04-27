@@ -4,7 +4,7 @@ import CategoryRow from "../components/CategoryRow";
 import Link from "../components/Link";
 import RadarChart from "../components/RadarChart";
 import { Badge, ScoreMeter } from "../components/ScoreBadge";
-import { clampScore } from "../utils/firmUtils";
+import { clampScore, scoreToMeterColor } from "../utils/firmUtils";
 
 function ChevronIcon({ direction = "left" }) {
   const isLeft = direction === "left";
@@ -172,6 +172,7 @@ export default function FirmPage({ firmId }) {
                         categories={entry.categories ?? []}
                         variant="mini"
                         emphasized={isActive}
+                        accentColor={scoreToMeterColor(entry.score)}
                         ariaLabel={`Miniatura wykresu z dnia ${formatSnapshotDate(entry.calculatedAt)}`}
                       />
                     </div>

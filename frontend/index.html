@@ -240,7 +240,14 @@
         margin-top: 2px;
       }
       .left {
+        flex: 1 1 auto;
         min-width: 0;
+      }
+      .listMiniChart {
+        flex: 0 0 auto;
+        width: 90px;
+        height: 90px;
+        opacity: 0.92;
       }
       .badge {
         flex: 0 0 auto;
@@ -430,6 +437,13 @@
         gap: 10px;
       }
       @media (max-width: 640px) {
+        .item {
+          align-items: flex-start;
+        }
+        .listMiniChart {
+          width: 76px;
+          height: 76px;
+        }
         .chartWrap {
           max-width: none;
         }
