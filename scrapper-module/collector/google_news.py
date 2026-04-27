@@ -326,6 +326,34 @@ if __name__ == "__main__":
             "name": "CD Projekt",
             "aliases": ["CD Projekt Red", "CDPR"],
         },
+        {
+            "name": "Allegro",
+            "aliases": ["Allegro.eu", "allegro.pl"],
+        },
+        {
+            "name": "PKO Bank Polski",
+            "aliases": ["PKO BP", "PKO"],
+        },
+        {
+            "name": "Pekao",
+            "aliases": ["Bank Pekao", "Pekao S.A."],
+        },
+        {
+            "name": "KGHM Polska Miedź",
+            "aliases": ["KGHM"],
+        },
+        {
+            "name": "LPP",
+            "aliases": ["Reserved", "Cropp", "House LPP"],
+        },
+        {
+            "name": "Dino Polska",
+            "aliases": ["Dino"],
+        },
+        {
+            "name": "Cyfrowy Polsat",
+            "aliases": ["Polsat", "Plus Cyfrowy Polsat"],
+        },
     ]
 
     result_json = collect_all_to_json(
