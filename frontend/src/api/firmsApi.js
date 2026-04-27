@@ -44,37 +44,70 @@ function buildDetails(company, rawScore) {
   return `Notable negative events on record.${suffix}`;
 }
 
-function buildFirm(company, scoreData, events, typeMap) {
-  const rawScore = scoreData?.latest?.score ?? null;
+function buildSnapshot(company, scoreEntry, events, typeMap, fallbackId) {
+  const rawScore = scoreEntry?.score ?? null;
+  const calculatedAt = scoreEntry?.calculated_at ?? null;
 
+  return {
+    id: fallbackId,
+    score: normalizeScore(rawScore),
+    rawScore,
+    calculatedAt,
+    details: buildDetails(company, rawScore),
+    categories: buildCategories(events, typeMap, calculatedAt),
+  };
+}
+
+function buildCategories(events, typeMap, snapshotDate) {
   const countByType = {};
+  const cutoff = snapshotDate ? Date.parse(snapshotDate) : Number.POSITIVE_INFINITY;
+
   for (const ev of events) {
+    const eventDate = Date.parse(ev.date);
+    if (Number.isFinite(cutoff) && Number.isFinite(eventDate) && eventDate > cutoff) {
+      continue;
+    }
+
     countByType[ev.type_id] = (countByType[ev.type_id] || 0) + 1;
   }
 
   // Only render the canonical 5 categories so stale DB rows cannot reintroduce a 6th axis.
-  const categories = CATEGORY_ORDER.map((name) =>
+  return CATEGORY_ORDER.map((name) =>
     Array.from(typeMap.values()).find((et) => normalizeCategoryName(et.name) === name)
   )
     .filter(Boolean)
     .map((et) => {
       const count = countByType[et.id] ?? 0;
+      const rawCategoryScore = count > 0 ? (et.score ?? 0) * count : null;
       return {
         id: String(et.id),
         name: et.name,
-        score: count > 0 ? normalizeScore(et.score) : 50,
+        score: count > 0 ? normalizeScore(rawCategoryScore) : 50,
         detail: count > 0
           ? `${count} zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} tego typu.`
           : "Brak zdarzen tego typu.",
       };
     });
+}
+
+function buildFirm(company, scoreData, events, typeMap) {
+  const history = (scoreData?.history ?? []).map((entry, index) => ({
+    ...buildSnapshot(company, entry, events, typeMap, `${company.id}-${entry.calculated_at}-${index}`),
+    isLatest: index === 0,
+  }));
+
+  const activeSnapshot = history[0] ?? {
+    ...buildSnapshot(company, scoreData?.latest ?? null, events, typeMap, `${company.id}-latest-fallback`),
+    isLatest: true,
+  };
 
   return {
     id: String(company.id),
     name: company.full_name,
-    score: normalizeScore(rawScore),
-    details: buildDetails(company, rawScore),
-    categories,
+    score: activeSnapshot.score,
+    details: activeSnapshot.details,
+    categories: activeSnapshot.categories,
+    scoreHistory: history,
   };
 }
 

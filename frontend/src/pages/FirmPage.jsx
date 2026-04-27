@@ -6,16 +6,31 @@ import RadarChart from "../components/RadarChart";
 import { Badge, ScoreMeter } from "../components/ScoreBadge";
 import { clampScore } from "../utils/firmUtils";
 
+function formatSnapshotDate(value) {
+  if (!value) return "Unknown date";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "Unknown date";
+
+  return new Intl.DateTimeFormat("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(parsed);
+}
+
 export default function FirmPage({ firmId }) {
   const [firm, setFirm] = React.useState(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+  const [selectedSnapshotId, setSelectedSnapshotId] = React.useState(null);
 
   React.useEffect(() => {
     let isActive = true;
     setIsLoading(true);
     setError(null);
     setFirm(null);
+    setSelectedSnapshotId(null);
 
     getFirmById(firmId)
       .then((data) => {
@@ -40,7 +55,9 @@ export default function FirmPage({ firmId }) {
     };
   }, [firmId]);
 
-  const firmScore = clampScore(firm?.score);
+  const scoreHistory = firm?.scoreHistory ?? [];
+  const activeSnapshot = scoreHistory.find((entry) => entry.id === selectedSnapshotId) ?? scoreHistory[0] ?? null;
+  const firmScore = clampScore(activeSnapshot?.score ?? firm?.score);
   const title = isLoading ? "Loading..." : firm?.name ?? "Firm not found";
   return (
     <main className="wrap">
@@ -64,7 +81,7 @@ export default function FirmPage({ firmId }) {
         <section className="card" aria-label="Firm details">
           <div className="firmTop">
             <div className="firmSummary">
-              <div className="meta">{firm.details}</div>
+              <div className="meta">{activeSnapshot?.details ?? firm.details}</div>
             </div>
             <div className="right">
               <Badge score={firmScore} />
@@ -76,14 +93,40 @@ export default function FirmPage({ firmId }) {
 
           <div className="panelTitle">Score breakdown</div>
           <div className="chartWrap">
-            <RadarChart categories={firm.categories ?? []} />
+            <RadarChart categories={activeSnapshot?.categories ?? firm.categories ?? []} />
           </div>
+
+          {scoreHistory.length > 1 ? (
+            <div className="scoreHistory" aria-label="Historyczne daty score">
+              {scoreHistory.map((entry) => {
+                const isActive = entry.id === activeSnapshot?.id;
+                const label = formatSnapshotDate(entry.calculatedAt);
+
+                return (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    className={`historyChip${isActive ? " active" : ""}`}
+                    onClick={() => setSelectedSnapshotId(entry.id)}
+                    aria-pressed={isActive}
+                  >
+                    <span>{label}</span>
+                    {entry.isLatest ? <span className="historyChipTag">aktualny</span> : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {activeSnapshot?.calculatedAt ? (
+            <div className="chartMeta">Widok wykresu dla score z dnia {formatSnapshotDate(activeSnapshot.calculatedAt)}.</div>
+          ) : null}
 
           <div className="divider" role="presentation" />
 
           <div className="panelTitle">What this score is based on (mock)</div>
           <ul className="catList" aria-label="Risk categories">
-            {(firm.categories ?? []).map((c) => (
+            {(activeSnapshot?.categories ?? firm.categories ?? []).map((c) => (
               <CategoryRow key={c.id} category={c} />
             ))}
           </ul>
