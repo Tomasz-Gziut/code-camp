@@ -1,103 +1,14 @@
 import React from "react";
 
-const MOCK_FIRMS = [
-  {
-    id: "acme",
-    name: "Acme Corp",
-    score: 92,
-    details: "Looks consistent overall. Nothing obvious jumps out in this mock demo.",
-    categories: [
-      { id: "identity", name: "Identity & Registration", score: 95, detail: "Names and contact details line up in the mock records." },
-      { id: "reviews", name: "Customer Reviews", score: 88, detail: "Mostly positive in the mock reviews with few repeats." },
-      { id: "compliance", name: "Compliance", score: 90, detail: "No major red flags in the mock compliance checks." },
-      { id: "financial", name: "Financial Signals", score: 86, detail: "Stable-looking mock signals, no sudden spikes." }
-    ]
-  },
-  {
-    id: "globex",
-    name: "Globex Corporation",
-    score: 41,
-    details: "Some things don’t quite match up in this mock demo. Worth double-checking.",
-    categories: [
-      { id: "identity", name: "Identity & Registration", score: 60, detail: "A couple details are missing in the mock records." },
-      { id: "reviews", name: "Customer Reviews", score: 38, detail: "Mixed mock feedback and a few recurring themes." },
-      { id: "compliance", name: "Compliance", score: 44, detail: "A few minor flags show up in the mock checks." },
-      { id: "financial", name: "Financial Signals", score: 32, detail: "Mock signals look a bit unstable and unclear." }
-    ]
-  },
-  {
-    id: "umbrella",
-    name: "Umbrella Group",
-    score: 18,
-    details: "A lot of warning signs in this mock demo. If this were real, you’d pause here.",
-    categories: [
-      { id: "identity", name: "Identity & Registration", score: 22, detail: "Several mismatches in the mock identity checks." },
-      { id: "reviews", name: "Customer Reviews", score: 14, detail: "Lots of negative mock reviews and repeat complaints." },
-      { id: "compliance", name: "Compliance", score: 19, detail: "Repeated mock flags and missing pieces." },
-      { id: "financial", name: "Financial Signals", score: 16, detail: "Mock activity looks irregular and risky." }
-    ]
-  },
-  {
-    id: "stark",
-    name: "Stark Industries",
-    score: 77,
-    details: "Generally solid in this mock demo, but there are a couple items to keep an eye on.",
-    categories: [
-      { id: "identity", name: "Identity & Registration", score: 86, detail: "Mock identity looks good and consistent." },
-      { id: "reviews", name: "Customer Reviews", score: 72, detail: "Mostly positive mock feedback with a few disputes." },
-      { id: "compliance", name: "Compliance", score: 70, detail: "Some minor mock warnings, but nothing major." },
-      { id: "financial", name: "Financial Signals", score: 78, detail: "Stable in the mock data, with normal swings." }
-    ]
-  },
-  {
-    id: "wayne",
-    name: "Wayne Enterprises",
-    score: 84,
-    details: "Looks pretty trustworthy in this mock demo. Not perfect, but strong overall.",
-    categories: [
-      { id: "identity", name: "Identity & Registration", score: 90, detail: "Mock verification is strong and consistent." },
-      { id: "reviews", name: "Customer Reviews", score: 80, detail: "Positive mock reviews and low complaint volume." },
-      { id: "compliance", name: "Compliance", score: 82, detail: "Mock filings look consistent with no big issues." },
-      { id: "financial", name: "Financial Signals", score: 83, detail: "Stable mock signals and low volatility." }
-    ]
-  },
-  {
-    id: "inosh",
-    name: "Inosh Partners",
-    score: 58,
-    details: "Not enough history in this mock demo. Could be fine, but it’s a bit of a question mark.",
-    categories: [
-      { id: "identity", name: "Identity & Registration", score: 62, detail: "Some basic mock verification passes, but limited history." },
-      { id: "reviews", name: "Customer Reviews", score: 55, detail: "Small mock sample size and mixed feedback." },
-      { id: "compliance", name: "Compliance", score: 52, detail: "A few missing items in the mock compliance list." },
-      { id: "financial", name: "Financial Signals", score: 63, detail: "Mock signals are okay, but early-stage patterns." }
-    ]
-  },
-  {
-    id: "northwind",
-    name: "Northwind Traders",
-    score: 66,
-    details: "Mostly okay in this mock demo with a couple small issues that could be normal.",
-    categories: [
-      { id: "identity", name: "Identity & Registration", score: 70, detail: "Mostly consistent in the mock checks, a minor mismatch or two." },
-      { id: "reviews", name: "Customer Reviews", score: 62, detail: "Mostly positive mock feedback with a few disputes." },
-      { id: "compliance", name: "Compliance", score: 68, detail: "Some minor mock issues, but regular updates." },
-      { id: "financial", name: "Financial Signals", score: 64, detail: "Moderate stability in the mock data; a bit seasonal." }
-    ]
-  }
-];
+const API = "/api";
 
-function normalize(value) {
-  return (value ?? "").trim().toLowerCase();
-}
+// ─── Score helpers ────────────────────────────────────────────────────────────
 
-function scoreFirm(firm, query) {
-  const name = normalize(firm.name);
-  if (!query) return 0;
-  if (name === query) return 100;
-  if (name.startsWith(query)) return 80;
-  if (name.includes(query)) return 60;
-  return -1;
+// Raw backend scores are open-ended (e.g. -65 to +33).
+// Map them to 0–100 for display: 0 raw → 50, -100 raw → 0, +100 raw → 100.
+function normalizeScore(raw) {
+  if (raw == null) return 50;
+  return Math.max(0, Math.min(100, Math.round(50 + raw / 2)));
 }
 
 function clampScore(score) {
@@ -114,6 +25,152 @@ function ratingFromScore(score) {
   return { label: "High risk", className: "vhighRisk", ariaLabel: "High risk" };
 }
 
+// ─── Data mapping ─────────────────────────────────────────────────────────────
+
+function detailText(company, rawScore) {
+  const aliases = company.aliases?.map((a) => a.name).join(", ");
+  const suffix = aliases ? ` Also known as: ${aliases}.` : "";
+  if (rawScore == null) return suffix.trim() || `NIP: ${company.nip}`;
+  if (rawScore > 20) return `Positive reputation signals.${suffix}`;
+  if (rawScore > 0) return `Mostly positive signals.${suffix}`;
+  if (rawScore > -20) return `Mixed reputation signals.${suffix}`;
+  return `Notable negative events on record.${suffix}`;
+}
+
+function mapToFirm(company, scoreData) {
+  const rawScore = scoreData?.latest?.score ?? null;
+  return {
+    id: String(company.id),
+    name: company.full_name,
+    score: normalizeScore(rawScore),
+    details: detailText(company, rawScore),
+    categories: [],
+  };
+}
+
+function mapToFirmDetail(company, scoreData, events, eventTypes) {
+  const rawScore = scoreData?.latest?.score ?? null;
+
+  const typeMap = new Map(eventTypes.map((t) => [t.id, t]));
+  const countByType = {};
+  for (const ev of events) {
+    countByType[ev.type_id] = (countByType[ev.type_id] || 0) + 1;
+  }
+
+  const categories = Object.entries(countByType).map(([typeId, count]) => {
+    const et = typeMap.get(Number(typeId));
+    return {
+      id: String(typeId),
+      name: et?.name ?? `Event type ${typeId}`,
+      score: et != null ? normalizeScore(et.score) : 50,
+      detail: `${count} event${count === 1 ? "" : "s"} of this type on record.`,
+    };
+  });
+
+  return {
+    id: String(company.id),
+    name: company.full_name,
+    score: normalizeScore(rawScore),
+    details: detailText(company, rawScore),
+    categories,
+  };
+}
+
+// ─── Data hooks ───────────────────────────────────────────────────────────────
+
+function useCompanies() {
+  const [firms, setFirms] = React.useState(null);
+  const [error, setError] = React.useState(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await fetch(`${API}/companies`);
+        if (!res.ok) throw new Error(`Failed to load companies (${res.status})`);
+        const companies = await res.json();
+
+        const scores = await Promise.all(
+          companies.map((c) =>
+            fetch(`${API}/companies/${c.id}/score`)
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null)
+          )
+        );
+
+        if (!cancelled) setFirms(companies.map((c, i) => mapToFirm(c, scores[i])));
+      } catch (e) {
+        if (!cancelled) setError(e.message);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return { firms, error };
+}
+
+function useCompanyDetail(firmId) {
+  const [firm, setFirm] = React.useState(null);
+  const [error, setError] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!firmId) return;
+    let cancelled = false;
+    setFirm(null);
+    setError(null);
+
+    async function load() {
+      try {
+        const [companyRes, scoreRes, eventsRes, typesRes] = await Promise.all([
+          fetch(`${API}/companies/${firmId}`),
+          fetch(`${API}/companies/${firmId}/score`),
+          fetch(`${API}/companies/${firmId}/events`),
+          fetch(`${API}/events/types`),
+        ]);
+
+        if (companyRes.status === 404) {
+          if (!cancelled) setFirm(null);
+          return;
+        }
+        if (!companyRes.ok) throw new Error(`Failed to load company (${companyRes.status})`);
+
+        const company = await companyRes.json();
+        const scoreData = scoreRes.ok ? await scoreRes.json() : null;
+        const events = eventsRes.ok ? await eventsRes.json() : [];
+        const eventTypes = typesRes.ok ? await typesRes.json() : [];
+
+        if (!cancelled) setFirm(mapToFirmDetail(company, scoreData, events, eventTypes));
+      } catch (e) {
+        if (!cancelled) setError(e.message);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [firmId]);
+
+  return { firm, error };
+}
+
+// ─── UI components ────────────────────────────────────────────────────────────
+
+function normalize(value) {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function scoreFirm(firm, query) {
+  const name = normalize(firm.name);
+  if (!query) return 0;
+  if (name === query) return 100;
+  if (name.startsWith(query)) return 80;
+  if (name.includes(query)) return 60;
+  return -1;
+}
+
 function Highlight({ text, query }) {
   const q = normalize(query);
   const t = String(text);
@@ -121,16 +178,11 @@ function Highlight({ text, query }) {
   const lower = t.toLowerCase();
   const idx = lower.indexOf(q);
   if (idx === -1) return t;
-
-  const before = t.slice(0, idx);
-  const mid = t.slice(idx, idx + q.length);
-  const after = t.slice(idx + q.length);
-
   return (
     <>
-      {before}
-      <mark>{mid}</mark>
-      {after}
+      {t.slice(0, idx)}
+      <mark>{t.slice(idx, idx + q.length)}</mark>
+      {t.slice(idx + q.length)}
     </>
   );
 }
@@ -230,7 +282,10 @@ function Link({ to, className, children, ...rest }) {
   );
 }
 
-function SearchPage({ firms }) {
+// ─── Pages ────────────────────────────────────────────────────────────────────
+
+function SearchPage() {
+  const { firms, error } = useCompanies();
   const [query, setQuery] = React.useState("");
   const inputRef = React.useRef(null);
 
@@ -239,6 +294,7 @@ function SearchPage({ firms }) {
   }, []);
 
   const matches = React.useMemo(() => {
+    if (!firms) return [];
     const q = normalize(query);
     if (!q) return firms.slice(0, 6);
     return firms
@@ -271,7 +327,7 @@ function SearchPage({ firms }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <div className="hint">Try: Acme, Globex, Umbrella, Stark, Wayne</div>
+            <div className="hint">Try: Allegro, CD Projekt, Asseco, PKO BP</div>
           </div>
         </div>
 
@@ -280,11 +336,15 @@ function SearchPage({ firms }) {
         <div className="resultsHeader">
           <h2>Results</h2>
           <div className="count" aria-live="polite">
-            {countText}
+            {firms === null && !error ? "Loading…" : countText}
           </div>
         </div>
 
-        {matches.length ? (
+        {error ? (
+          <div className="empty">Could not load firms: {error}</div>
+        ) : firms === null ? (
+          <div className="empty">Loading firms…</div>
+        ) : matches.length ? (
           <ul className="list" aria-label="Firm results">
             {matches.map((firm) => (
               <li key={firm.id} className="firmLi">
@@ -304,28 +364,38 @@ function SearchPage({ firms }) {
             ))}
           </ul>
         ) : (
-          <div className="empty">No firms found in the mock list.</div>
+          <div className="empty">No firms found.</div>
         )}
 
-        <div className="footerNote">Risk labels and scores are mock values for UI demo only.</div>
+        <div className="footerNote">Risk labels and scores are derived from database events and sentiment data.</div>
       </section>
     </main>
   );
 }
 
-function FirmPage({ firm }) {
+function FirmPage({ firmId }) {
+  const { firm, error } = useCompanyDetail(firmId);
   const firmScore = clampScore(firm?.score);
+
   return (
     <main className="wrap">
       <header className="pageHeader">
         <Link to="/" className="backLink">
           ← Back
         </Link>
-        <h1>{firm?.name ?? "Firm not found"}</h1>
-        <p className="sub">Demo only. Everything on this page is mock data.</p>
+        <h1>{firm?.name ?? (error ? "Error" : firmId ? "Loading…" : "Firm not found")}</h1>
+        <p className="sub">Demo only. Scores are calculated from database events and article sentiment.</p>
       </header>
 
-      {firm ? (
+      {error ? (
+        <section className="card" aria-label="Error">
+          <div className="empty">Could not load firm: {error}</div>
+        </section>
+      ) : firm === null && !error ? (
+        <section className="card" aria-label="Loading">
+          <div className="empty">Loading…</div>
+        </section>
+      ) : firm ? (
         <section className="card" aria-label="Firm details">
           <div className="firmTop">
             <div className="firmSummary">
@@ -339,30 +409,34 @@ function FirmPage({ firm }) {
 
           <div className="divider" role="presentation" />
 
-          <div className="panelTitle">What this score is based on (mock)</div>
-          <ul className="catList" aria-label="Risk categories">
-            {(firm.categories ?? []).map((c) => (
-              <CategoryRow key={c.id} category={c} />
-            ))}
-          </ul>
+          {firm.categories.length > 0 && (
+            <>
+              <div className="panelTitle">What this score is based on</div>
+              <ul className="catList" aria-label="Risk categories">
+                {firm.categories.map((c) => (
+                  <CategoryRow key={c.id} category={c} />
+                ))}
+              </ul>
+            </>
+          )}
 
-          <div className="footerNote">In a real app, these categories would come from real checks and sources.</div>
+          <div className="footerNote">Scores reflect events and article sentiment recorded in the database.</div>
         </section>
       ) : (
         <section className="card" aria-label="Not found">
-          <div className="empty">Firm not found in the mock list.</div>
+          <div className="empty">Firm not found.</div>
         </section>
       )}
     </main>
   );
 }
 
+// ─── App ──────────────────────────────────────────────────────────────────────
+
 export default function App() {
   const pathname = usePathname();
   const firmId = parseFirmIdFromPathname(pathname);
 
-  if (!firmId) return <SearchPage firms={MOCK_FIRMS} />;
-
-  const firm = MOCK_FIRMS.find((f) => f.id === firmId) ?? null;
-  return <FirmPage firm={firm} />;
+  if (!firmId) return <SearchPage />;
+  return <FirmPage firmId={firmId} />;
 }
