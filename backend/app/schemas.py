@@ -53,6 +53,7 @@ class ArticleCreate(BaseModel):
     url: Optional[str] = None
     content: Optional[str] = None
     sentiment: Optional[float] = None
+    published_at: Optional[datetime] = None
 
 class ArticleOut(ArticleCreate):
     id: int

@@ -141,23 +141,55 @@ def get_event_by_company_article_and_type(
 
 # --- Scoring ---
 
+_SENTIMENT_HALF_LIFE_DAYS = 90.0
+_SENTIMENT_MULTIPLIER = 10.0
+
+
+def _time_decay_weight(published_at, now) -> float:
+    import math
+    if published_at is None:
+        return 0.5  # nieznana data → połowa wagi
+    days_ago = max((now - published_at).days, 0)
+    return math.exp(-math.log(2) * days_ago / _SENTIMENT_HALF_LIFE_DAYS)
+
+
 def calculate_and_save_score(db: Session, company_id: int) -> models.CompanyScore:
+    from datetime import datetime
+
+    now = datetime.utcnow()
+
+    # Eventy → składowa event_score
     events = (
         db.query(models.Event, models.EventType)
         .join(models.EventType, models.Event.type_id == models.EventType.id)
         .filter(models.Event.company_id == company_id)
         .all()
     )
-
     event_score = sum((et.score or 0) for _, et in events)
 
-    article_ids = [e.article_id for e, _ in events if e.article_id is not None]
-    sentiment_score = 0.0
-    if article_ids:
-        articles = db.query(models.Article).filter(models.Article.id.in_(article_ids)).all()
-        sentiment_score = sum((a.sentiment or 0.0) * 10 for a in articles)
+    # Sentiment ze WSZYSTKICH artykułów powiązanych z firmą (nie tylko przez eventy)
+    company_articles = (
+        db.query(models.Article)
+        .join(models.CompanyArticle, models.CompanyArticle.article_id == models.Article.id)
+        .filter(models.CompanyArticle.company_id == company_id)
+        .all()
+    )
 
-    total = float(event_score) + sentiment_score
+    weighted_sentiment_sum = 0.0
+    weight_total = 0.0
+    for article in company_articles:
+        if article.sentiment is None:
+            continue
+        weight = _time_decay_weight(article.published_at, now)
+        weighted_sentiment_sum += article.sentiment * weight
+        weight_total += weight
+
+    # Normalizacja: średni ważony sentiment → skala punktowa
+    sentiment_score = 0.0
+    if weight_total > 0:
+        sentiment_score = (weighted_sentiment_sum / weight_total) * _SENTIMENT_MULTIPLIER
+
+    total = round(float(event_score) + sentiment_score, 2)
 
     score_record = models.CompanyScore(company_id=company_id, score=total)
     db.add(score_record)

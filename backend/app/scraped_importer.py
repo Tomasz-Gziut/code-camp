@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -10,6 +11,17 @@ from app.crud import (
     get_event_types,
     calculate_and_save_score,
 )
+
+
+def _parse_date(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d", "%d.%m.%Y"):
+        try:
+            return datetime.strptime(value, fmt)
+        except ValueError:
+            continue
+    return None
 
 
 def _ensure_default_event_types(db: Session) -> dict[str, models.EventType]:
@@ -77,6 +89,7 @@ def import_scraped_companies(
                     url=scraped_article.url,
                     content=scraped_article.content,
                     sentiment=None,
+                    published_at=_parse_date(scraped_article.published),
                 )
                 db.add(article)
                 db.flush()
@@ -109,8 +122,10 @@ def import_scraped_companies(
                 article_links_created += 1
                 touched_company_ids.add(company.id)
 
-            if analysis.event_type_name:
-                event_type = event_types_by_name[analysis.event_type_name.casefold()]
+            for event_type_name in analysis.event_type_names:
+                event_type = event_types_by_name.get(event_type_name.casefold())
+                if event_type is None:
+                    continue
                 event = get_event_by_company_article_and_type(db, company.id, article.id, event_type.id)
                 if event is None:
                     db.add(

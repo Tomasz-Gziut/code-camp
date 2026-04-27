@@ -58,6 +58,7 @@ class Article(Base):
     url = Column(String(500))
     content = Column(Text)
     sentiment = Column(Float)
+    published_at = Column(DateTime, nullable=True)
 
     company_articles = relationship("CompanyArticle", back_populates="article", cascade="all, delete-orphan")
 
@@ -68,7 +69,7 @@ class Event(Base):
     id = Column(Integer, primary_key=True, index=True)
     company_id = Column(Integer, ForeignKey("company.id", ondelete="CASCADE"), nullable=False)
     type_id = Column(Integer, ForeignKey("event_type.id"), nullable=False)
-    article_id = Column(Integer, nullable=True)
+    article_id = Column(Integer, ForeignKey("article.id", ondelete="SET NULL"), nullable=True)
     date = Column(DateTime, default=datetime.utcnow)
 
     company = relationship("Company", back_populates="events")
