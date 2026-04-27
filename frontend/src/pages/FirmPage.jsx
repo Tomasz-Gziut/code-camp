@@ -6,6 +6,26 @@ import RadarChart from "../components/RadarChart";
 import { Badge, ScoreMeter } from "../components/ScoreBadge";
 import { clampScore } from "../utils/firmUtils";
 
+function ChevronIcon({ direction = "left" }) {
+  const isLeft = direction === "left";
+
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d={isLeft ? "M14.5 5.5L8 12l6.5 6.5" : "M9.5 5.5L16 12l-6.5 6.5"} />
+    </svg>
+  );
+}
+
 function formatSnapshotDate(value) {
   if (!value) return "Unknown date";
 
@@ -110,7 +130,7 @@ export default function FirmPage({ firmId }) {
                 disabled={activeSnapshotIndex <= 0}
                 aria-label="Pokaz poprzedni score"
               >
-                {"<"}
+                <ChevronIcon direction="left" />
               </button>
               <div className="chartDateLabel">{formatSnapshotDate(activeSnapshot.calculatedAt)}</div>
               <button
@@ -120,7 +140,7 @@ export default function FirmPage({ firmId }) {
                 disabled={activeSnapshotIndex >= scoreHistory.length - 1}
                 aria-label="Pokaz nastepny score"
               >
-                {">"}
+                <ChevronIcon direction="right" />
               </button>
             </div>
           ) : null}
