@@ -1,0 +1,19 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from app import crud, schemas
+from app.database import get_db
+
+router = APIRouter(prefix="/articles", tags=["articles"])
+
+
+@router.post("", response_model=schemas.ArticleOut, status_code=201)
+def create_article(data: schemas.ArticleCreate, db: Session = Depends(get_db)):
+    return crud.create_article(db, data)
+
+
+@router.get("/{article_id}", response_model=schemas.ArticleOut)
+def get_article(article_id: int, db: Session = Depends(get_db)):
+    article = crud.get_article(db, article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    return article
