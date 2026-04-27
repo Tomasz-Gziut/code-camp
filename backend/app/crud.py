@@ -122,6 +122,23 @@ def get_event(db: Session, event_id: int) -> models.Event | None:
     return db.query(models.Event).filter(models.Event.id == event_id).first()
 
 
+def get_event_by_company_article_and_type(
+    db: Session,
+    company_id: int,
+    article_id: int,
+    type_id: int,
+) -> models.Event | None:
+    return (
+        db.query(models.Event)
+        .filter(
+            models.Event.company_id == company_id,
+            models.Event.article_id == article_id,
+            models.Event.type_id == type_id,
+        )
+        .first()
+    )
+
+
 # --- Scoring ---
 
 def calculate_and_save_score(db: Session, company_id: int) -> models.CompanyScore:

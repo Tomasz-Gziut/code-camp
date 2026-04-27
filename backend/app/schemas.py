@@ -149,3 +149,5 @@ class ScrapedImportResponse(BaseModel):
     companies_updated: int
     articles_created: int
     article_links_created: int
+    events_created: int
+    scores_created: int
