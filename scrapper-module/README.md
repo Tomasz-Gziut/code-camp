@@ -27,21 +27,22 @@ cd code-camp
 **Windows (PowerShell / CMD):**
 
 ```bash
-python -m venv venv
+python -m venv scrapper-module/venv
 venv\Scripts\activate
 ```
 
 **Windows (Git Bash):**
 
 ```bash
-python -m venv venv
+python -m venv scrapper-module/venv
+cd scrapper-module
 source venv/Scripts/activate
 ```
 
 **macOS / Linux:**
 
 ```bash
-python -m venv venv
+python -m venv scrapper-module/venv
 source venv/bin/activate
 ```
 
