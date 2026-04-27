@@ -15,6 +15,8 @@
         --border: rgba(170, 194, 255, 0.16);
         --accent: #7dd3fc;
         --accent-2: #c084fc;
+        --meter-start: #163b6f;
+        --meter-end: #27d3b0;
         --low: #22c55e;
         --med: #eab308;
         --high: #f97316;
@@ -398,6 +400,7 @@
         white-space: nowrap;
       }
       .meter {
+        position: relative;
         width: 88px;
         height: 8px;
         border-radius: 999px;
@@ -406,10 +409,12 @@
         overflow: hidden;
       }
       .meterFill {
+        position: absolute;
+        inset: 0;
         display: block;
-        height: 100%;
-        width: 0%;
-        background: linear-gradient(90deg, var(--vhigh), var(--high), var(--med), var(--low));
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--meter-start), var(--meter-end));
+        clip-path: inset(0 calc(100% - var(--fill-percent, 0%)) 0 0 round 999px);
       }
       .panel {
         margin-top: 8px;

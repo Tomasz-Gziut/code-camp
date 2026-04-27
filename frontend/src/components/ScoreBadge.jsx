@@ -17,7 +17,7 @@ export function ScoreMeter({ score, label }) {
     <div className="score" aria-label={label ?? `Score ${s} out of 100`}>
       <span>Score {s}/100</span>
       <span className="meter" role="img" aria-label="Score bar">
-        <span className="meterFill" style={{ width: `${s}%` }} />
+        <span className="meterFill" style={{ "--fill-percent": `${s}%` }} />
       </span>
     </div>
   );
