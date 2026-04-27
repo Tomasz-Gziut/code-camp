@@ -3,7 +3,8 @@ import React from "react";
 const CX = 190;
 const CY = 150;
 const MAX_R = 80;
-const LABEL_R = 120;
+const LABEL_R = MAX_R + 44;
+const SCORE_LABEL_R = MAX_R + 2;
 const LEVELS = 4;
 const W = 380;
 const H = 300;
@@ -24,6 +25,16 @@ function textAnchor(a) {
   const x = Math.cos(a);
   if (Math.abs(x) < 0.15) return "middle";
   return x > 0 ? "start" : "end";
+}
+
+function dominantBaseline(a) {
+  const y = Math.sin(a);
+  if (Math.abs(y) < 0.15) return "middle";
+  return y > 0 ? "hanging" : "auto";
+}
+
+function scoreLabelPt(a) {
+  return polarPt(a, SCORE_LABEL_R);
 }
 
 function splitName(name) {
@@ -93,35 +104,20 @@ export default function RadarChart({ categories }) {
         />
       ))}
 
-      {/* Score values near each dot */}
-      {dataPoints.map(({ r }, i) => {
-        const a = angles[i];
-        const nudge = Math.max(r + 13, 18);
-        const sp = polarPt(a, nudge);
-        return (
-          <text
-            key={i}
-            x={sp.x.toFixed(1)}
-            y={sp.y.toFixed(1)}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fontSize="10"
-            fontWeight="600"
-            fill="#1d4ed8"
-          >
-            {categories[i].score}
-          </text>
-        );
-      })}
-
       {/* Category name labels at each axis tip */}
       {categories.map((cat, i) => {
         const a = angles[i];
         const lp = polarPt(a, LABEL_R);
-        const ta = textAnchor(a);
         const [l1, l2] = splitName(cat.name);
         return (
-          <text key={i} x={lp.x.toFixed(1)} y={lp.y.toFixed(1)} textAnchor={ta} fontSize="11" fill="#374151">
+          <text
+            key={i}
+            x={lp.x.toFixed(1)}
+            y={lp.y.toFixed(1)}
+            textAnchor="middle"
+            fontSize="11"
+            fill="#374151"
+          >
             {l2 ? (
               <>
                 <tspan x={lp.x.toFixed(1)} dy="-0.65em">
@@ -134,6 +130,26 @@ export default function RadarChart({ categories }) {
             ) : (
               <tspan dominantBaseline="middle">{l1}</tspan>
             )}
+          </text>
+        );
+      })}
+
+      {/* Score values pinned to the outer chart edges */}
+      {categories.map((cat, i) => {
+        const a = angles[i];
+        const sp = scoreLabelPt(a);
+        return (
+          <text
+            key={cat.id ?? i}
+            x={sp.x.toFixed(1)}
+            y={sp.y.toFixed(1)}
+            textAnchor={textAnchor(a)}
+            dominantBaseline={dominantBaseline(a)}
+            fontSize="10"
+            fontWeight="700"
+            fill="#1d4ed8"
+          >
+            {cat.score}
           </text>
         );
       })}
