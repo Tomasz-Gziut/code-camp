@@ -5,84 +5,84 @@ const MOCK_FIRMS = [
     id: "acme",
     name: "Acme Corp",
     score: 92,
-    details: "Mock signals: clean profile • long history",
+    details: "Looks consistent overall. Nothing obvious jumps out in this mock demo.",
     categories: [
-      { id: "identity", name: "Identity & Registration", score: 95, detail: "Mock: matching records • verified contacts" },
-      { id: "reviews", name: "Customer Reviews", score: 88, detail: "Mock: mostly positive • low dispute rate" },
-      { id: "compliance", name: "Compliance", score: 90, detail: "Mock: no major flags • consistent filings" },
-      { id: "financial", name: "Financial Signals", score: 86, detail: "Mock: stable indicators • low volatility" }
+      { id: "identity", name: "Identity & Registration", score: 95, detail: "Names and contact details line up in the mock records." },
+      { id: "reviews", name: "Customer Reviews", score: 88, detail: "Mostly positive in the mock reviews with few repeats." },
+      { id: "compliance", name: "Compliance", score: 90, detail: "No major red flags in the mock compliance checks." },
+      { id: "financial", name: "Financial Signals", score: 86, detail: "Stable-looking mock signals, no sudden spikes." }
     ]
   },
   {
     id: "globex",
     name: "Globex Corporation",
     score: 41,
-    details: "Mock signals: mixed reviews • limited info",
+    details: "Some things don’t quite match up in this mock demo. Worth double-checking.",
     categories: [
-      { id: "identity", name: "Identity & Registration", score: 60, detail: "Mock: partial match • missing documents" },
-      { id: "reviews", name: "Customer Reviews", score: 38, detail: "Mock: mixed feedback • recurring complaints" },
-      { id: "compliance", name: "Compliance", score: 44, detail: "Mock: inconsistent filings • minor flags" },
-      { id: "financial", name: "Financial Signals", score: 32, detail: "Mock: volatility • unclear ownership" }
+      { id: "identity", name: "Identity & Registration", score: 60, detail: "A couple details are missing in the mock records." },
+      { id: "reviews", name: "Customer Reviews", score: 38, detail: "Mixed mock feedback and a few recurring themes." },
+      { id: "compliance", name: "Compliance", score: 44, detail: "A few minor flags show up in the mock checks." },
+      { id: "financial", name: "Financial Signals", score: 32, detail: "Mock signals look a bit unstable and unclear." }
     ]
   },
   {
     id: "umbrella",
     name: "Umbrella Group",
     score: 18,
-    details: "Mock signals: multiple complaints • mismatched records",
+    details: "A lot of warning signs in this mock demo. If this were real, you’d pause here.",
     categories: [
-      { id: "identity", name: "Identity & Registration", score: 22, detail: "Mock: mismatched records • suspicious domains" },
-      { id: "reviews", name: "Customer Reviews", score: 14, detail: "Mock: many complaints • chargeback mentions" },
-      { id: "compliance", name: "Compliance", score: 19, detail: "Mock: repeated flags • missing disclosures" },
-      { id: "financial", name: "Financial Signals", score: 16, detail: "Mock: high risk patterns • irregular activity" }
+      { id: "identity", name: "Identity & Registration", score: 22, detail: "Several mismatches in the mock identity checks." },
+      { id: "reviews", name: "Customer Reviews", score: 14, detail: "Lots of negative mock reviews and repeat complaints." },
+      { id: "compliance", name: "Compliance", score: 19, detail: "Repeated mock flags and missing pieces." },
+      { id: "financial", name: "Financial Signals", score: 16, detail: "Mock activity looks irregular and risky." }
     ]
   },
   {
     id: "stark",
     name: "Stark Industries",
     score: 77,
-    details: "Mock signals: verified contacts • some warnings",
+    details: "Generally solid in this mock demo, but there are a couple items to keep an eye on.",
     categories: [
-      { id: "identity", name: "Identity & Registration", score: 86, detail: "Mock: verified entity • clear ownership" },
-      { id: "reviews", name: "Customer Reviews", score: 72, detail: "Mock: good feedback • some disputes" },
-      { id: "compliance", name: "Compliance", score: 70, detail: "Mock: minor warnings • mostly consistent" },
-      { id: "financial", name: "Financial Signals", score: 78, detail: "Mock: stable • moderate volatility" }
+      { id: "identity", name: "Identity & Registration", score: 86, detail: "Mock identity looks good and consistent." },
+      { id: "reviews", name: "Customer Reviews", score: 72, detail: "Mostly positive mock feedback with a few disputes." },
+      { id: "compliance", name: "Compliance", score: 70, detail: "Some minor mock warnings, but nothing major." },
+      { id: "financial", name: "Financial Signals", score: 78, detail: "Stable in the mock data, with normal swings." }
     ]
   },
   {
     id: "wayne",
     name: "Wayne Enterprises",
     score: 84,
-    details: "Mock signals: verified identity • stable operations",
+    details: "Looks pretty trustworthy in this mock demo. Not perfect, but strong overall.",
     categories: [
-      { id: "identity", name: "Identity & Registration", score: 90, detail: "Mock: verified • strong documentation" },
-      { id: "reviews", name: "Customer Reviews", score: 80, detail: "Mock: positive • low complaint volume" },
-      { id: "compliance", name: "Compliance", score: 82, detail: "Mock: consistent filings • no major flags" },
-      { id: "financial", name: "Financial Signals", score: 83, detail: "Mock: stable • low risk indicators" }
+      { id: "identity", name: "Identity & Registration", score: 90, detail: "Mock verification is strong and consistent." },
+      { id: "reviews", name: "Customer Reviews", score: 80, detail: "Positive mock reviews and low complaint volume." },
+      { id: "compliance", name: "Compliance", score: 82, detail: "Mock filings look consistent with no big issues." },
+      { id: "financial", name: "Financial Signals", score: 83, detail: "Stable mock signals and low volatility." }
     ]
   },
   {
     id: "inosh",
     name: "Inosh Partners",
     score: 58,
-    details: "Mock signals: new firm • partial verification",
+    details: "Not enough history in this mock demo. Could be fine, but it’s a bit of a question mark.",
     categories: [
-      { id: "identity", name: "Identity & Registration", score: 62, detail: "Mock: verified email • limited history" },
-      { id: "reviews", name: "Customer Reviews", score: 55, detail: "Mock: small sample size • mixed" },
-      { id: "compliance", name: "Compliance", score: 52, detail: "Mock: incomplete filings • no major flags" },
-      { id: "financial", name: "Financial Signals", score: 63, detail: "Mock: stable • early-stage patterns" }
+      { id: "identity", name: "Identity & Registration", score: 62, detail: "Some basic mock verification passes, but limited history." },
+      { id: "reviews", name: "Customer Reviews", score: 55, detail: "Small mock sample size and mixed feedback." },
+      { id: "compliance", name: "Compliance", score: 52, detail: "A few missing items in the mock compliance list." },
+      { id: "financial", name: "Financial Signals", score: 63, detail: "Mock signals are okay, but early-stage patterns." }
     ]
   },
   {
     id: "northwind",
     name: "Northwind Traders",
     score: 66,
-    details: "Mock signals: consistent filings • minor issues",
+    details: "Mostly okay in this mock demo with a couple small issues that could be normal.",
     categories: [
-      { id: "identity", name: "Identity & Registration", score: 70, detail: "Mock: consistent • minor mismatches" },
-      { id: "reviews", name: "Customer Reviews", score: 62, detail: "Mock: mostly positive • a few disputes" },
-      { id: "compliance", name: "Compliance", score: 68, detail: "Mock: minor issues • regular updates" },
-      { id: "financial", name: "Financial Signals", score: 64, detail: "Mock: moderate stability • seasonal swings" }
+      { id: "identity", name: "Identity & Registration", score: 70, detail: "Mostly consistent in the mock checks, a minor mismatch or two." },
+      { id: "reviews", name: "Customer Reviews", score: 62, detail: "Mostly positive mock feedback with a few disputes." },
+      { id: "compliance", name: "Compliance", score: 68, detail: "Some minor mock issues, but regular updates." },
+      { id: "financial", name: "Financial Signals", score: 64, detail: "Moderate stability in the mock data; a bit seasonal." }
     ]
   }
 ];
@@ -108,10 +108,10 @@ function clampScore(score) {
 
 function ratingFromScore(score) {
   const s = clampScore(score);
-  if (s >= 80) return { label: "LOW RISK", className: "lowRisk", ariaLabel: "Low risk" };
-  if (s >= 55) return { label: "MEDIUM RISK", className: "medRisk", ariaLabel: "Medium risk" };
-  if (s >= 30) return { label: "HIGH RISK", className: "highRisk", ariaLabel: "High risk" };
-  return { label: "VERY HIGH RISK", className: "vhighRisk", ariaLabel: "Very high risk" };
+  if (s >= 80) return { label: "Looks good", className: "lowRisk", ariaLabel: "Looks good" };
+  if (s >= 55) return { label: "Mostly ok", className: "medRisk", ariaLabel: "Mostly ok" };
+  if (s >= 30) return { label: "Needs a look", className: "highRisk", ariaLabel: "Needs a closer look" };
+  return { label: "High risk", className: "vhighRisk", ariaLabel: "High risk" };
 }
 
 function Highlight({ text, query }) {
@@ -200,7 +200,11 @@ function usePathname() {
 
 function navigate(to) {
   window.history.pushState({}, "", to);
-  window.dispatchEvent(new PopStateEvent("popstate"));
+  try {
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  } catch {
+    window.dispatchEvent(new Event("popstate"));
+  }
 }
 
 function Link({ to, className, children, ...rest }) {
@@ -213,7 +217,11 @@ function Link({ to, className, children, ...rest }) {
         if (e.button !== 0) return;
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         e.preventDefault();
-        navigate(to);
+        try {
+          navigate(to);
+        } catch {
+          window.location.assign(to);
+        }
       }}
       {...rest}
     >
@@ -246,13 +254,13 @@ function SearchPage({ firms }) {
     <main className="wrap">
       <header>
         <h1>Firm Safety Checker</h1>
-        <p className="sub">Mockup only. This does not use real data and should not be used for real decisions.</p>
+        <p className="sub">Demo only. These scores are made up and not real safety advice.</p>
       </header>
 
       <section className="card" aria-label="Search">
         <div className="row">
           <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
-            <label htmlFor="query">Search for a firm</label>
+            <label htmlFor="query">Search a firm</label>
             <input
               ref={inputRef}
               id="query"
@@ -314,7 +322,7 @@ function FirmPage({ firm }) {
           ← Back
         </Link>
         <h1>{firm?.name ?? "Firm not found"}</h1>
-        <p className="sub">Mockup only. This does not use real data and should not be used for real decisions.</p>
+        <p className="sub">Demo only. Everything on this page is mock data.</p>
       </header>
 
       {firm ? (
@@ -331,14 +339,14 @@ function FirmPage({ firm }) {
 
           <div className="divider" role="presentation" />
 
-          <div className="panelTitle">Categories</div>
+          <div className="panelTitle">What this score is based on (mock)</div>
           <ul className="catList" aria-label="Risk categories">
             {(firm.categories ?? []).map((c) => (
               <CategoryRow key={c.id} category={c} />
             ))}
           </ul>
 
-          <div className="footerNote">Risk labels and scores are mock values for UI demo only.</div>
+          <div className="footerNote">In a real app, these categories would come from real checks and sources.</div>
         </section>
       ) : (
         <section className="card" aria-label="Not found">
