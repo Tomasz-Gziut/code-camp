@@ -1,22 +1,65 @@
 import React from "react";
+import { getFirmById } from "../api/firmsApi";
 import CategoryRow from "../components/CategoryRow";
 import Link from "../components/Link";
 import { Badge, ScoreMeter } from "../components/ScoreBadge";
 import { clampScore } from "../utils/firmUtils";
 
-export default function FirmPage({ firm }) {
+export default function FirmPage({ firmId }) {
+  const [firm, setFirm] = React.useState(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+
+  React.useEffect(() => {
+    let isActive = true;
+    setIsLoading(true);
+    setError(null);
+    setFirm(null);
+
+    getFirmById(firmId)
+      .then((data) => {
+        if (!isActive) return;
+        setFirm(data ?? null);
+      })
+      .catch((err) => {
+        if (!isActive) return;
+        if (err?.status === 404) {
+          setFirm(null);
+          return;
+        }
+        setError(err);
+      })
+      .finally(() => {
+        if (!isActive) return;
+        setIsLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [firmId]);
+
   const firmScore = clampScore(firm?.score);
+  const title = isLoading ? "Loading..." : firm?.name ?? "Firm not found";
   return (
     <main className="wrap">
       <header className="pageHeader">
         <Link to="/" className="backLink">
           ← Back
         </Link>
-        <h1>{firm?.name ?? "Firm not found"}</h1>
+        <h1>{title}</h1>
         <p className="sub">Demo only. Everything on this page is mock data.</p>
       </header>
 
-      {firm ? (
+      {isLoading ? (
+        <section className="card" aria-label="Loading">
+          <div className="empty">Loading firm...</div>
+        </section>
+      ) : error ? (
+        <section className="card" aria-label="Error">
+          <div className="empty">Failed to load firm.</div>
+        </section>
+      ) : firm ? (
         <section className="card" aria-label="Firm details">
           <div className="firmTop">
             <div className="firmSummary">

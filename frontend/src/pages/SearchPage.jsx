@@ -1,15 +1,42 @@
 import React from "react";
+import { getFirms } from "../api/firmsApi";
 import Highlight from "../components/Highlight";
 import Link from "../components/Link";
 import { Badge, ScoreMeter } from "../components/ScoreBadge";
 import { firmPath, normalize, scoreFirm } from "../utils/firmUtils";
 
-export default function SearchPage({ firms }) {
+export default function SearchPage() {
+  const [firms, setFirms] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
   const [query, setQuery] = React.useState("");
   const inputRef = React.useRef(null);
 
   React.useEffect(() => {
     inputRef.current?.focus?.();
+  }, []);
+
+  React.useEffect(() => {
+    let isActive = true;
+    setIsLoading(true);
+    setError(null);
+    getFirms()
+      .then((items) => {
+        if (!isActive) return;
+        setFirms(Array.isArray(items) ? items : []);
+      })
+      .catch((err) => {
+        if (!isActive) return;
+        setError(err);
+        setFirms([]);
+      })
+      .finally(() => {
+        if (!isActive) return;
+        setIsLoading(false);
+      });
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const matches = React.useMemo(() => {
@@ -22,7 +49,7 @@ export default function SearchPage({ firms }) {
       .map((x) => x.firm);
   }, [query, firms]);
 
-  const countText = `${matches.length} match${matches.length === 1 ? "" : "es"}`;
+  const countText = isLoading ? "Loading..." : `${matches.length} match${matches.length === 1 ? "" : "es"}`;
 
   return (
     <main className="wrap">
@@ -41,7 +68,7 @@ export default function SearchPage({ firms }) {
               type="search"
               inputMode="search"
               autoComplete="off"
-              placeholder="Type a firm name..."
+              placeholder="Type a firm name…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -58,7 +85,11 @@ export default function SearchPage({ firms }) {
           </div>
         </div>
 
-        {matches.length ? (
+        {isLoading ? (
+          <div className="empty">Loading firms...</div>
+        ) : error ? (
+          <div className="empty">Failed to load firms.</div>
+        ) : matches.length ? (
           <ul className="list" aria-label="Firm results">
             {matches.map((firm) => (
               <li key={firm.id} className="firmLi">
