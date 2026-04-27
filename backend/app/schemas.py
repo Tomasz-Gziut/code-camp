@@ -95,3 +95,10 @@ class CompanyScoreOut(BaseModel):
 class CompanyScoreResponse(BaseModel):
     latest: Optional[CompanyScoreOut] = None
     history: List[CompanyScoreOut] = []
+
+
+# --- CompanyArticle ---
+class CompanyArticleOut(BaseModel):
+    company_id: int
+    article_id: int
+    model_config = {"from_attributes": True}

@@ -24,6 +24,10 @@ def get_company(db: Session, company_id: int) -> models.Company | None:
     return db.query(models.Company).filter(models.Company.id == company_id).first()
 
 
+def get_companies(db: Session, skip: int = 0, limit: int = 100) -> list[models.Company]:
+    return db.query(models.Company).offset(skip).limit(limit).all()
+
+
 # --- Article ---
 
 def create_article(db: Session, data: schemas.ArticleCreate) -> models.Article:
@@ -36,6 +40,10 @@ def create_article(db: Session, data: schemas.ArticleCreate) -> models.Article:
 
 def get_article(db: Session, article_id: int) -> models.Article | None:
     return db.query(models.Article).filter(models.Article.id == article_id).first()
+
+
+def get_articles(db: Session, skip: int = 0, limit: int = 100) -> list[models.Article]:
+    return db.query(models.Article).offset(skip).limit(limit).all()
 
 
 # --- EventType ---
@@ -52,6 +60,10 @@ def get_event_type(db: Session, type_id: int) -> models.EventType | None:
     return db.query(models.EventType).filter(models.EventType.id == type_id).first()
 
 
+def get_event_types(db: Session, skip: int = 0, limit: int = 100) -> list[models.EventType]:
+    return db.query(models.EventType).offset(skip).limit(limit).all()
+
+
 # --- Event ---
 
 def create_event(db: Session, data: schemas.EventCreate) -> models.Event:
@@ -64,6 +76,14 @@ def create_event(db: Session, data: schemas.EventCreate) -> models.Event:
 
 def get_events_for_company(db: Session, company_id: int) -> list[models.Event]:
     return db.query(models.Event).filter(models.Event.company_id == company_id).all()
+
+
+def get_events(db: Session, skip: int = 0, limit: int = 100) -> list[models.Event]:
+    return db.query(models.Event).offset(skip).limit(limit).all()
+
+
+def get_event(db: Session, event_id: int) -> models.Event | None:
+    return db.query(models.Event).filter(models.Event.id == event_id).first()
 
 
 # --- Scoring ---
