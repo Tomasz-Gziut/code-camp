@@ -1,11 +1,11 @@
 import React from "react";
 
 const W = 520;
-const H = 400;
+const H = 340;
 const CX = W / 2;
-const CY = 190;
-const MAX_R = 110;
-const SCORE_LABEL_R = MAX_R + 12;
+const CY = H / 2;
+const MAX_R = 118;
+const SCORE_LABEL_R = MAX_R + 20;
 const LEVELS = 4;
 const DATA_VALLEY_RATIO = 0.52;
 
@@ -73,15 +73,15 @@ function labelLayout(a) {
     return {
       textAnchor: "middle",
       xOffset: 0,
-      yOffset: y < 0 ? -22 : 22,
+      yOffset: y < 0 ? -18 : 18,
       lineGap: 12,
     };
   }
 
   return {
     textAnchor: x > 0 ? "start" : "end",
-    xOffset: x > 0 ? 28 : -28,
-    yOffset: y < 0 ? -10 : 10,
+    xOffset: x > 0 ? 20 : -20,
+    yOffset: y < 0 ? -8 : 8,
     lineGap: 14,
   };
 }
@@ -123,6 +123,7 @@ export default function RadarChart({ categories }) {
     <svg
       viewBox={`0 0 ${W} ${H}`}
       width="100%"
+      height="auto"
       aria-label="Radar chart of category scores"
       style={{ display: "block", overflow: "visible" }}
     >

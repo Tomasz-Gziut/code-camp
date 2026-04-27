@@ -1,11 +1,19 @@
 const API = "/api";
 const CATEGORY_ORDER = [
-  "Naruszenie danych",
-  "Partnerstwa i wzrost",
-  "Postępowania prawne",
-  "Nagrody i reputacja",
-  "Nadzór regulacyjny",
+  "naruszenie danych",
+  "partnerstwa i wzrost",
+  "postepowania prawne",
+  "nagrody i reputacja",
+  "nadzor regulacyjny",
 ];
+
+function normalizeCategoryName(name) {
+  return String(name ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
 
 async function requestJson(path) {
   const res = await fetch(path, { headers: { accept: "application/json" } });
@@ -20,7 +28,7 @@ async function requestJson(path) {
 }
 
 // Raw backend scores are open-ended (e.g. -65 to +33).
-// Map to 0–100: 0 raw → 50, -100 raw → 0, +100 raw → 100.
+// Map to 0-100: 0 raw -> 50, -100 raw -> 0, +100 raw -> 100.
 function normalizeScore(raw) {
   if (raw == null) return 50;
   return Math.max(0, Math.min(100, Math.round(50 + raw / 2)));
@@ -29,9 +37,9 @@ function normalizeScore(raw) {
 function buildDetails(company, rawScore) {
   const aliases = company.aliases?.map((a) => a.name).join(", ");
   const suffix = aliases ? ` Also known as: ${aliases}.` : "";
-  if (rawScore == null) return (suffix.trim() || `NIP: ${company.nip}`);
+  if (rawScore == null) return suffix.trim() || `NIP: ${company.nip}`;
   if (rawScore > 20) return `Positive reputation signals.${suffix}`;
-  if (rawScore > 0)  return `Mostly positive signals.${suffix}`;
+  if (rawScore > 0) return `Mostly positive signals.${suffix}`;
   if (rawScore > -20) return `Mixed reputation signals.${suffix}`;
   return `Notable negative events on record.${suffix}`;
 }
@@ -46,20 +54,20 @@ function buildFirm(company, scoreData, events, typeMap) {
 
   // Only render the canonical 5 categories so stale DB rows cannot reintroduce a 6th axis.
   const categories = CATEGORY_ORDER.map((name) =>
-    Array.from(typeMap.values()).find((et) => et.name === name)
+    Array.from(typeMap.values()).find((et) => normalizeCategoryName(et.name) === name)
   )
     .filter(Boolean)
     .map((et) => {
-    const count = countByType[et.id] ?? 0;
-    return {
-      id: String(et.id),
-      name: et.name,
-      score: count > 0 ? normalizeScore(et.score) : 50,
-      detail: count > 0
-        ? `${count} zdarzenie${count === 1 ? "" : count < 5 ? "a" : "ń"} tego typu.`
-        : "Brak zdarzeń tego typu.",
-    };
-  });
+      const count = countByType[et.id] ?? 0;
+      return {
+        id: String(et.id),
+        name: et.name,
+        score: count > 0 ? normalizeScore(et.score) : 50,
+        detail: count > 0
+          ? `${count} zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} tego typu.`
+          : "Brak zdarzen tego typu.",
+      };
+    });
 
   return {
     id: String(company.id),
