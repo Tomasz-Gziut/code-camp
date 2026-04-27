@@ -1,5 +1,5 @@
 """
-Krok 1: Zbieranie artykułów z Google News RSS.
+Krok 1: Zbieranie artykułów z Google News RSS oraz GDELT.
 Dla każdej firmy (i jej wariantów nazw) pobiera listę artykułów.
 """
 
@@ -12,7 +12,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from playwright.async_api import async_playwright
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
+from urllib.request import urlopen
 
 from push_to_backend import push_payload_to_backend
 
@@ -147,22 +148,86 @@ def fetch_google_news(
     return articles
 
 
+def fetch_gdelt_news(
+    query: str,
+    max_results: int = 250,
+    timespan: str = "LAST30DAYS",
+    lang: str = "Polish",
+) -> list[Article]:
+    """
+    Pobiera artykuły z GDELT DOC 2.0 API dla podanego zapytania.
+
+    Args:
+        query:       np. "PKN Orlen" — nazwa firmy lub alias
+        max_results: maks. liczba artykułów (max 250 per request w GDELT)
+        timespan:    zakres czasu, np. "LAST7DAYS", "LAST30DAYS", "LAST3MONTHS"
+        lang:        język źródła, np. "Polish", "English"
+
+    Returns:
+        Lista artykułów (może być pusta jeśli brak wyników lub błąd sieci).
+    """
+    full_query = f"{query} sourcelang:{lang}"
+    params = urlencode({
+        "query": full_query,
+        "mode": "artlist",
+        "maxrecords": min(max_results, 250),
+        "format": "json",
+        "timespan": timespan,
+    })
+    url = f"https://api.gdeltproject.org/api/v2/doc/doc?{params}"
+
+    try:
+        with urlopen(url, timeout=20) as response:
+            data = json.loads(response.read().decode())
+    except Exception as e:
+        label = f"  [GDELT] blad pobierania dla '{query}': {e}"
+        print(label.encode("ascii", errors="replace").decode("ascii"), flush=True)
+        return []
+
+    articles = []
+    for entry in (data.get("articles") or []):
+        published = entry.get("seendate", "")
+        try:
+            published = datetime.strptime(published, "%Y%m%dT%H%M%SZ").isoformat()
+        except Exception:
+            pass
+
+        articles.append(Article(
+            title=entry.get("title", ""),
+            url=entry.get("url", ""),
+            source=entry.get("domain", ""),
+            published=published,
+            summary="",
+            query=query,
+        ))
+
+    return articles
+
+
 def collect_for_company(
     company_name: str,
     aliases: list[str] | None = None,
     fetch_content: bool = False,
+    max_results_google: int = 10,
+    max_results_gdelt: int = 250,
+    gdelt_timespan: str = "LAST30DAYS",
+    use_gdelt: bool = True,
 ) -> list[Article]:
     """
-    Zbiera artykuły dla firmy używając jej nazwy i opcjonalnych aliasów.
-    Usuwa duplikaty (ten sam URL z różnych zapytań).
+    Zbiera artykuły dla firmy z Google News i (opcjonalnie) GDELT.
+    Usuwa duplikaty (ten sam URL z różnych zapytań i źródeł).
 
     Args:
-        company_name:  Główna nazwa firmy, np. "PKN Orlen S.A."
-        aliases:       Dodatkowe warianty, np. ["Orlen", "PKN"]
-        fetch_content: Czy pobierać pełną treść artykułów (wolniejsze).
+        company_name:        Główna nazwa firmy, np. "PKN Orlen S.A."
+        aliases:             Dodatkowe warianty, np. ["Orlen", "PKN"]
+        fetch_content:       Czy pobierać pełną treść artykułów (wolniejsze).
+        max_results_google:  Maks. artykułów per query z Google News.
+        max_results_gdelt:   Maks. artykułów per query z GDELT (max 250).
+        gdelt_timespan:      Zakres czasu dla GDELT, np. "LAST7DAYS", "LAST30DAYS".
+        use_gdelt:           Czy używać GDELT jako dodatkowego źródła.
 
     Returns:
-        Unikalna lista artykułów ze wszystkich zapytań.
+        Unikalna lista artykułów ze wszystkich zapytań i źródeł.
     """
     queries = [company_name] + (aliases or [])
 
@@ -170,10 +235,19 @@ def collect_for_company(
     results: list[Article] = []
 
     for query in queries:
-        for art in fetch_google_news(query):
+        for art in fetch_google_news(query, max_results=max_results_google):
             if art.url not in seen_urls:
                 seen_urls.add(art.url)
                 results.append(art)
+
+    if use_gdelt:
+        gdelt_label = f"  [GDELT] pobieranie ({gdelt_timespan})..."
+        print(gdelt_label.encode("ascii", errors="replace").decode("ascii"), flush=True)
+        for query in queries:
+            for art in fetch_gdelt_news(query, max_results=max_results_gdelt, timespan=gdelt_timespan):
+                if art.url not in seen_urls:
+                    seen_urls.add(art.url)
+                    results.append(art)
 
     if fetch_content:
         _fetch_content_for_articles(results)
@@ -181,7 +255,14 @@ def collect_for_company(
     return results
 
 
-def collect_all_to_json(companies: list[dict], fetch_content: bool = False) -> str:
+def collect_all_to_json(
+    companies: list[dict],
+    fetch_content: bool = False,
+    max_results_google: int = 10,
+    max_results_gdelt: int = 250,
+    gdelt_timespan: str = "LAST30DAYS",
+    use_gdelt: bool = True,
+) -> str:
     """
     Zbiera artykuły dla listy firm i zwraca wynik jako JSON string.
 
@@ -209,7 +290,15 @@ def collect_all_to_json(companies: list[dict], fetch_content: bool = False) -> s
     for company in companies:
         label = f"\n[{company['name']}]"
         print(label.encode("ascii", errors="replace").decode("ascii"), flush=True)
-        articles = collect_for_company(company["name"], company.get("aliases"), fetch_content=fetch_content)
+        articles = collect_for_company(
+            company["name"],
+            company.get("aliases"),
+            fetch_content=fetch_content,
+            max_results_google=max_results_google,
+            max_results_gdelt=max_results_gdelt,
+            gdelt_timespan=gdelt_timespan,
+            use_gdelt=use_gdelt,
+        )
         output["companies"].append({
             "name": company["name"],
             "aliases": company.get("aliases", []),
@@ -239,7 +328,14 @@ if __name__ == "__main__":
         },
     ]
 
-    result_json = collect_all_to_json(COMPANIES, fetch_content=True)
+    result_json = collect_all_to_json(
+        COMPANIES,
+        fetch_content=True,
+        max_results_google=int(os.getenv("MAX_RESULTS_GOOGLE", "10")),
+        max_results_gdelt=int(os.getenv("MAX_RESULTS_GDELT", "250")),
+        gdelt_timespan=os.getenv("GDELT_TIMESPAN", "LAST30DAYS"),
+        use_gdelt=os.getenv("USE_GDELT", "true").strip().lower() in {"1", "true", "yes"},
+    )
 
     # Zapisz do pliku
     output_path = "articles.json"
