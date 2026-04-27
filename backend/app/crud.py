@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from app import models, schemas
+from app.company_matcher import normalize_text
 
 
 # --- Company ---
@@ -28,6 +29,20 @@ def get_companies(db: Session, skip: int = 0, limit: int = 100) -> list[models.C
     return db.query(models.Company).offset(skip).limit(limit).all()
 
 
+def get_company_by_name_or_alias(db: Session, name: str) -> models.Company | None:
+    normalized_target = normalize_text(name)
+    if not normalized_target:
+        return None
+
+    for company in db.query(models.Company).all():
+        if normalize_text(company.full_name) == normalized_target:
+            return company
+        for alias in company.aliases:
+            if normalize_text(alias.name) == normalized_target:
+                return company
+    return None
+
+
 # --- Article ---
 
 def create_article(db: Session, data: schemas.ArticleCreate) -> models.Article:
@@ -44,6 +59,27 @@ def get_article(db: Session, article_id: int) -> models.Article | None:
 
 def get_articles(db: Session, skip: int = 0, limit: int = 100) -> list[models.Article]:
     return db.query(models.Article).offset(skip).limit(limit).all()
+
+
+def get_article_by_url(db: Session, url: str | None) -> models.Article | None:
+    if not url:
+        return None
+    return db.query(models.Article).filter(models.Article.url == url).first()
+
+
+def get_company_article_link(
+    db: Session,
+    company_id: int,
+    article_id: int,
+) -> models.CompanyArticle | None:
+    return (
+        db.query(models.CompanyArticle)
+        .filter(
+            models.CompanyArticle.company_id == company_id,
+            models.CompanyArticle.article_id == article_id,
+        )
+        .first()
+    )
 
 
 # --- EventType ---
@@ -84,6 +120,23 @@ def get_events(db: Session, skip: int = 0, limit: int = 100) -> list[models.Even
 
 def get_event(db: Session, event_id: int) -> models.Event | None:
     return db.query(models.Event).filter(models.Event.id == event_id).first()
+
+
+def get_event_by_company_article_and_type(
+    db: Session,
+    company_id: int,
+    article_id: int,
+    type_id: int,
+) -> models.Event | None:
+    return (
+        db.query(models.Event)
+        .filter(
+            models.Event.company_id == company_id,
+            models.Event.article_id == article_id,
+            models.Event.type_id == type_id,
+        )
+        .first()
+    )
 
 
 # --- Scoring ---

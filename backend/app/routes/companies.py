@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app import crud, schemas
 from app.database import get_db
+from app.scraped_importer import import_scraped_companies
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -19,6 +20,14 @@ def list_companies(
 @router.post("", response_model=schemas.CompanyOut, status_code=201)
 def create_company(data: schemas.CompanyCreate, db: Session = Depends(get_db)):
     return crud.create_company(db, data)
+
+
+@router.post("/import-scraped", response_model=schemas.ScrapedImportResponse, status_code=201)
+def import_companies_from_scraper(
+    data: schemas.ScrapedImportRequest,
+    db: Session = Depends(get_db),
+):
+    return import_scraped_companies(db, data)
 
 
 @router.get("/{company_id}", response_model=schemas.CompanyOut)

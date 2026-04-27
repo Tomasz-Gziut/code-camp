@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
-from app.routes import companies, articles, events, scores
+from app.routes import companies, articles, article_company_detection, events, scores
 
 Base.metadata.create_all(bind=engine)
 
@@ -16,6 +16,7 @@ app.add_middleware(
 
 app.include_router(companies.router)
 app.include_router(articles.router)
+app.include_router(article_company_detection.router)
 app.include_router(events.router)
 app.include_router(scores.router)
 

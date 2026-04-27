@@ -6,12 +6,15 @@ Dla każdej firmy (i jej wariantów nazw) pobiera listę artykułów.
 import asyncio
 import feedparser
 import json
+import os
 import trafilatura
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from playwright.async_api import async_playwright
 from urllib.parse import quote
+
+from push_to_backend import push_payload_to_backend
 
 
 @dataclass
@@ -209,6 +212,7 @@ def collect_all_to_json(companies: list[dict], fetch_content: bool = False) -> s
         articles = collect_for_company(company["name"], company.get("aliases"), fetch_content=fetch_content)
         output["companies"].append({
             "name": company["name"],
+            "aliases": company.get("aliases", []),
             "article_count": len(articles),
             "articles": [a.to_dict() for a in articles],
         })
@@ -241,5 +245,9 @@ if __name__ == "__main__":
     output_path = "articles.json"
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(result_json)
+
+    if os.getenv("AUTO_PUSH_TO_BACKEND", "").strip().lower() in {"1", "true", "yes"}:
+        response = push_payload_to_backend(json.loads(result_json))
+        print(json.dumps(response, ensure_ascii=False, indent=2), flush=True)
 
     print(f"\n✓ Zapisano do {output_path}", flush=True)
