@@ -341,15 +341,15 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 12px;
-        margin-top: 16px;
+        gap: 0;
+        margin-top: 12px;
       }
       .snapshotMiniButton {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 82px;
-        height: 82px;
+        width: 92px;
+        height: 92px;
         padding: 0;
         border: 0;
         background: transparent;
@@ -361,8 +361,8 @@
         transform: translateY(-1px);
       }
       .snapshotMini {
-        width: 56px;
-        height: 56px;
+        width: 90px;
+        height: 90px;
         transform: scale(1);
         transition: transform 0.18s ease, filter 0.18s ease, opacity 0.18s ease;
         opacity: 0.68;
@@ -371,7 +371,7 @@
         opacity: 0.9;
       }
       .snapshotMiniButton.active .snapshotMini {
-        transform: scale(1.08);
+        transform: scale(1.12);
         opacity: 1;
         filter: drop-shadow(0 0 10px color-mix(in oklab, var(--purple2) 44%, transparent));
       }
@@ -400,12 +400,12 @@
           font-size: 12px;
         }
         .snapshotMiniButton {
-          width: 70px;
-          height: 70px;
+          width: 76px;
+          height: 76px;
         }
         .snapshotMini {
-          width: 48px;
-          height: 48px;
+          width: 76px;
+          height: 76px;
         }
       }
       .catRow {

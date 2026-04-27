@@ -1,11 +1,16 @@
 import React from "react";
 
-const W = 520;
-const H = 340;
-const CX = W / 2;
-const CY = H / 2;
-const MAX_R = 118;
-const SCORE_LABEL_R = MAX_R + 20;
+const FULL_W = 520;
+const FULL_H = 340;
+const FULL_CX = FULL_W / 2;
+const FULL_CY = FULL_H / 2;
+const FULL_MAX_R = 118;
+const FULL_SCORE_LABEL_R = FULL_MAX_R + 20;
+const MINI_W = 220;
+const MINI_H = 220;
+const MINI_CX = MINI_W / 2;
+const MINI_CY = MINI_H / 2;
+const MINI_MAX_R = 92;
 const LEVELS = 4;
 const DATA_VALLEY_RATIO = 0.52;
 
@@ -13,16 +18,16 @@ function axisAngle(i, n) {
   return (i / n) * 2 * Math.PI - Math.PI / 2;
 }
 
-function polarPt(a, r) {
-  return { x: CX + r * Math.cos(a), y: CY + r * Math.sin(a) };
+function polarPt(a, r, cx, cy) {
+  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
 }
 
 function ptStr(pts) {
   return pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
 }
 
-function buildPolygonPoints(angles, radius) {
-  return angles.map((angle) => polarPt(angle, radius));
+function buildPolygonPoints(angles, radius, cx, cy) {
+  return angles.map((angle) => polarPt(angle, radius, cx, cy));
 }
 
 function midAngle(a, b) {
@@ -31,14 +36,14 @@ function midAngle(a, b) {
   return Math.atan2(ay, ax);
 }
 
-function buildStarPoints(angles, radii, valleyRatio) {
+function buildStarPoints(angles, radii, valleyRatio, cx, cy) {
   return angles.flatMap((angle, i) => {
     const nextIndex = (i + 1) % angles.length;
     const nextAngle = angles[nextIndex];
     const valleyAngle = midAngle(angle, nextAngle);
     const valleyRadius = Math.min(radii[i], radii[nextIndex]) * valleyRatio;
 
-    return [polarPt(angle, radii[i]), polarPt(valleyAngle, valleyRadius)];
+    return [polarPt(angle, radii[i], cx, cy), polarPt(valleyAngle, valleyRadius, cx, cy)];
   });
 }
 
@@ -54,8 +59,8 @@ function dominantBaseline(a) {
   return y > 0 ? "hanging" : "auto";
 }
 
-function scoreLabelPt(a) {
-  return polarPt(a, SCORE_LABEL_R);
+function scoreLabelPt(a, scoreLabelR, cx, cy) {
+  return polarPt(a, scoreLabelR, cx, cy);
 }
 
 function splitName(name) {
@@ -108,27 +113,39 @@ export default function RadarChart({
   if (!n) return null;
 
   const isMini = variant === "mini";
+  const geometry = isMini
+    ? { w: MINI_W, h: MINI_H, cx: MINI_CX, cy: MINI_CY, maxR: MINI_MAX_R, scoreLabelR: MINI_MAX_R }
+    : {
+      w: FULL_W,
+      h: FULL_H,
+      cx: FULL_CX,
+      cy: FULL_CY,
+      maxR: FULL_MAX_R,
+      scoreLabelR: FULL_SCORE_LABEL_R,
+    };
 
   const angles = categories.map((_, i) => axisAngle(i, n));
 
   const gridRings = Array.from({ length: LEVELS }, (_, li) => {
-    const radius = ((li + 1) / LEVELS) * MAX_R;
-    return buildPolygonPoints(angles, radius);
+    const radius = ((li + 1) / LEVELS) * geometry.maxR;
+    return buildPolygonPoints(angles, radius, geometry.cx, geometry.cy);
   });
 
   const dataPoints = categories.map((cat, i) => {
-    const r = (Math.min(Math.max(cat.score ?? 0, 0), 100) / 100) * MAX_R;
-    return { pt: polarPt(angles[i], r), r };
+    const r = (Math.min(Math.max(cat.score ?? 0, 0), 100) / 100) * geometry.maxR;
+    return { pt: polarPt(angles[i], r, geometry.cx, geometry.cy), r };
   });
   const orderedDataPoints = buildStarPoints(
     angles,
     dataPoints.map(({ r }) => r),
-    DATA_VALLEY_RATIO
+    DATA_VALLEY_RATIO,
+    geometry.cx,
+    geometry.cy
   );
 
   return (
     <svg
-      viewBox={`0 0 ${W} ${H}`}
+      viewBox={`0 0 ${geometry.w} ${geometry.h}`}
       width="100%"
       height="auto"
       aria-label={ariaLabel}
@@ -148,12 +165,12 @@ export default function RadarChart({
 
       {!isMini
         ? angles.map((a, i) => {
-          const end = polarPt(a, MAX_R);
+          const end = polarPt(a, geometry.maxR, geometry.cx, geometry.cy);
           return (
             <line
               key={i}
-              x1={CX}
-              y1={CY}
+              x1={geometry.cx}
+              y1={geometry.cy}
               x2={end.x.toFixed(1)}
               y2={end.y.toFixed(1)}
               stroke="color-mix(in oklab, var(--text) 16%, transparent)"
@@ -196,7 +213,7 @@ export default function RadarChart({
       {!isMini
         ? categories.map((cat, i) => {
           const a = angles[i];
-          const scorePt = scoreLabelPt(a);
+          const scorePt = scoreLabelPt(a, geometry.scoreLabelR, geometry.cx, geometry.cy);
           const layout = labelLayout(a);
           const labelX = scorePt.x + layout.xOffset;
           const labelY = scorePt.y + layout.yOffset;
@@ -227,7 +244,7 @@ export default function RadarChart({
       {!isMini
         ? categories.map((cat, i) => {
           const a = angles[i];
-          const sp = scoreLabelPt(a);
+          const sp = scoreLabelPt(a, geometry.scoreLabelR, geometry.cx, geometry.cy);
           return (
             <text
               key={cat.id ?? i}
