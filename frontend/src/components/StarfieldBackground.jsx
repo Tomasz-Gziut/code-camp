@@ -40,6 +40,7 @@ const LAYERS = STAR_LAYERS.map(createLayer);
 export default function StarfieldBackground() {
   return (
     <div className="starfield" aria-hidden="true">
+      <div className="starfieldBase" />
       <div className="starfieldGlow starfieldGlowA" />
       <div className="starfieldGlow starfieldGlowB" />
       {LAYERS.map((layer, layerIndex) => (

@@ -30,10 +30,7 @@
       body {
         margin: 0;
         font-family: "Segoe UI", "Trebuchet MS", Verdana, sans-serif;
-        background:
-          radial-gradient(1200px 800px at 10% 0%, rgba(118, 84, 255, 0.18), transparent 52%),
-          radial-gradient(900px 700px at 90% 12%, rgba(34, 211, 238, 0.12), transparent 48%),
-          linear-gradient(180deg, #07101f 0%, var(--bg) 38%, var(--bg-deep) 100%);
+        background: linear-gradient(180deg, #07101f 0%, var(--bg) 38%, var(--bg-deep) 100%);
         color: var(--text);
         min-height: 100vh;
         overflow-x: hidden;
@@ -56,11 +53,21 @@
         pointer-events: none;
         z-index: 0;
       }
+      .starfieldBase {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(1200px 800px at 10% 0%, rgba(118, 84, 255, 0.18), transparent 52%),
+          radial-gradient(900px 700px at 90% 12%, rgba(34, 211, 238, 0.12), transparent 48%),
+          linear-gradient(180deg, #07101f 0%, var(--bg) 38%, var(--bg-deep) 100%);
+      }
       .starfieldGlow {
         position: absolute;
         border-radius: 999px;
         filter: blur(22px);
         opacity: 0.35;
+        animation: galaxyDriftA 34s ease-in-out infinite alternate;
+        will-change: transform, opacity;
       }
       .starfieldGlowA {
         top: 8%;
@@ -79,6 +86,7 @@
         min-width: 220px;
         min-height: 220px;
         background: radial-gradient(circle, rgba(125, 211, 252, 0.18), transparent 70%);
+        animation: galaxyDriftB 42s ease-in-out infinite alternate;
       }
       .starLayer {
         position: absolute;
@@ -117,7 +125,54 @@
           opacity: 0.22;
         }
       }
+      @keyframes galaxyDriftA {
+        0% {
+          transform: translate3d(-8vw, -4vh, 0) scale(0.88);
+          opacity: 0.18;
+        }
+        25% {
+          transform: translate3d(3vw, 2vh, 0) scale(1);
+          opacity: 0.28;
+        }
+        50% {
+          transform: translate3d(10vw, 8vh, 0) scale(1.14);
+          opacity: 0.38;
+        }
+        75% {
+          transform: translate3d(-2vw, 14vh, 0) scale(1.04);
+          opacity: 0.3;
+        }
+        100% {
+          transform: translate3d(-12vw, 6vh, 0) scale(0.92);
+          opacity: 0.2;
+        }
+      }
+      @keyframes galaxyDriftB {
+        0% {
+          transform: translate3d(10vw, -6vh, 0) scale(0.84);
+          opacity: 0.12;
+        }
+        20% {
+          transform: translate3d(2vw, 6vh, 0) scale(0.94);
+          opacity: 0.2;
+        }
+        50% {
+          transform: translate3d(-12vw, 16vh, 0) scale(1.18);
+          opacity: 0.3;
+        }
+        80% {
+          transform: translate3d(-4vw, 4vh, 0) scale(1.02);
+          opacity: 0.22;
+        }
+        100% {
+          transform: translate3d(8vw, -2vh, 0) scale(0.9);
+          opacity: 0.14;
+        }
+      }
       @media (prefers-reduced-motion: reduce) {
+        .starfieldGlow {
+          animation: none;
+        }
         .star {
           animation: none;
           opacity: 0.45;
