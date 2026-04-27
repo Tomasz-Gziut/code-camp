@@ -35,6 +35,8 @@ try:
     print("Istniejące dane wyczyszczone.")
 
     # --- EventTypes (dokładnie 5 → pentagon na wykresie) ---
+    # "Ekspansja rynkowa" nie występuje już jako osobny typ.
+    # Zdarzenia wzrostowe trafiają do wspólnej kategorii "Partnerstwa i wzrost".
     event_types_data = [
         {"name": "Naruszenie danych",        "score": -30},
         {"name": "Partnerstwa i wzrost",      "score":  22},
@@ -217,7 +219,7 @@ try:
         # Allegro (platforma e-commerce — głównie pozytywna)
         {"company": allegro,   "event_type": ET_BREACH,    "article": A[1],  "days_ago": 10},
         {"company": allegro,   "event_type": ET_PARTNER,   "article": A[0],  "days_ago":  5},
-        {"company": allegro,   "event_type": ET_PARTNER,   "article": A[3],  "days_ago": 30},  # 2 zdarzenia partnerskie
+        {"company": allegro,   "event_type": ET_PARTNER,   "article": A[3],  "days_ago": 30},  # wzrost/ekspansja wpada do tej samej osi
         {"company": allegro,   "event_type": ET_LAWSUIT,   "article": A[1],  "days_ago": 90},  # stary spór
         {"company": allegro,   "event_type": ET_AWARD,     "article": A[2],  "days_ago": 20},
         {"company": allegro,   "event_type": ET_REGULATOR, "article": A[1],  "days_ago": 60},

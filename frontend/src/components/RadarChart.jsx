@@ -1,12 +1,12 @@
 import React from "react";
 
-const CX = 190;
-const CY = 150;
-const MAX_R = 80;
-const SCORE_LABEL_R = MAX_R + 2;
+const W = 520;
+const H = 400;
+const CX = W / 2;
+const CY = 190;
+const MAX_R = 110;
+const SCORE_LABEL_R = MAX_R + 12;
 const LEVELS = 4;
-const W = 380;
-const H = 320;
 
 function axisAngle(i, n) {
   return (i / n) * 2 * Math.PI - Math.PI / 2;
@@ -58,9 +58,9 @@ function labelLayout(a) {
 
   return {
     textAnchor: x > 0 ? "start" : "end",
-    xOffset: x > 0 ? 18 : -18,
+    xOffset: x > 0 ? 28 : -28,
     yOffset: y < 0 ? -10 : 10,
-    lineGap: 12,
+    lineGap: 14,
   };
 }
 
@@ -90,12 +90,24 @@ export default function RadarChart({ categories }) {
     const r = (Math.min(Math.max(cat.score ?? 0, 0), 100) / 100) * MAX_R;
     return { pt: polarPt(angles[i], r), r };
   });
+  const orderedDataPoints = dataPoints.map(({ pt }) => pt);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" aria-label="Radar chart of category scores">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      width="100%"
+      aria-label="Radar chart of category scores"
+      style={{ display: "block", overflow: "visible" }}
+    >
       {/* Grid rings */}
       {gridRings.map((pts, li) => (
-        <polygon key={li} points={ptStr(pts)} fill="none" stroke="#e5e7eb" strokeWidth="1" />
+        <polygon
+          key={li}
+          points={ptStr(pts)}
+          fill="none"
+          stroke="color-mix(in oklab, var(--text) 18%, transparent)"
+          strokeWidth="1.5"
+        />
       ))}
 
       {/* Axis lines */}
@@ -108,7 +120,7 @@ export default function RadarChart({ categories }) {
             y1={CY}
             x2={end.x.toFixed(1)}
             y2={end.y.toFixed(1)}
-            stroke="#d1d5db"
+            stroke="color-mix(in oklab, var(--text) 16%, transparent)"
             strokeWidth="1"
           />
         );
@@ -116,7 +128,7 @@ export default function RadarChart({ categories }) {
 
       {/* Data polygon */}
       <polygon
-        points={ptStr(dataPoints.map((d) => d.pt))}
+        points={ptStr(orderedDataPoints)}
         fill="rgba(59,130,246,0.15)"
         stroke="#3b82f6"
         strokeWidth="2"
@@ -150,8 +162,8 @@ export default function RadarChart({ categories }) {
             x={labelX.toFixed(1)}
             y={labelY.toFixed(1)}
             textAnchor={layout.textAnchor}
-            fontSize="11"
-            fill="#374151"
+            fontSize="12"
+            fill="var(--muted)"
           >
             {lines.map((line, lineIndex) => (
               <tspan
@@ -177,7 +189,7 @@ export default function RadarChart({ categories }) {
             y={sp.y.toFixed(1)}
             textAnchor={textAnchor(a)}
             dominantBaseline={dominantBaseline(a)}
-            fontSize="10"
+            fontSize="12"
             fontWeight="700"
             fill="#1d4ed8"
           >

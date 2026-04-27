@@ -75,7 +75,9 @@ export default function FirmPage({ firmId }) {
           <div className="divider" role="presentation" />
 
           <div className="panelTitle">Score breakdown</div>
-          <RadarChart categories={firm.categories ?? []} />
+          <div className="chartWrap">
+            <RadarChart categories={firm.categories ?? []} />
+          </div>
 
           <div className="divider" role="presentation" />
 

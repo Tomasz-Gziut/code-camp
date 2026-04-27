@@ -289,12 +289,22 @@
         color: var(--muted);
         margin-bottom: 10px;
       }
+      .chartWrap {
+        width: 100%;
+        max-width: 560px;
+        margin: 0 auto;
+      }
       .catList {
         list-style: none;
         padding: 0;
         margin: 0;
         display: grid;
         gap: 10px;
+      }
+      @media (max-width: 640px) {
+        .chartWrap {
+          max-width: none;
+        }
       }
       .catRow {
         display: flex;

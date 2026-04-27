@@ -1,4 +1,11 @@
 const API = "/api";
+const CATEGORY_ORDER = [
+  "Naruszenie danych",
+  "Partnerstwa i wzrost",
+  "Postępowania prawne",
+  "Nagrody i reputacja",
+  "Nadzór regulacyjny",
+];
 
 async function requestJson(path) {
   const res = await fetch(path, { headers: { accept: "application/json" } });
@@ -37,9 +44,12 @@ function buildFirm(company, scoreData, events, typeMap) {
     countByType[ev.type_id] = (countByType[ev.type_id] || 0) + 1;
   }
 
-  // Always emit ALL event types so the radar chart has a consistent shape.
-  // Types with no events get a neutral score (50) and a placeholder detail.
-  const categories = Array.from(typeMap.values()).map((et) => {
+  // Only render the canonical 5 categories so stale DB rows cannot reintroduce a 6th axis.
+  const categories = CATEGORY_ORDER.map((name) =>
+    Array.from(typeMap.values()).find((et) => et.name === name)
+  )
+    .filter(Boolean)
+    .map((et) => {
     const count = countByType[et.id] ?? 0;
     return {
       id: String(et.id),
