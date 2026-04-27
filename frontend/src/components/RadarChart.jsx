@@ -7,7 +7,6 @@ const CY = 190;
 const MAX_R = 110;
 const SCORE_LABEL_R = MAX_R + 12;
 const LEVELS = 4;
-const GRID_VALLEY_RATIO = 0.42;
 const DATA_VALLEY_RATIO = 0.52;
 
 function axisAngle(i, n) {
@@ -20,6 +19,10 @@ function polarPt(a, r) {
 
 function ptStr(pts) {
   return pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+}
+
+function buildPolygonPoints(angles, radius) {
+  return angles.map((angle) => polarPt(angle, radius));
 }
 
 function midAngle(a, b) {
@@ -103,11 +106,7 @@ export default function RadarChart({ categories }) {
 
   const gridRings = Array.from({ length: LEVELS }, (_, li) => {
     const radius = ((li + 1) / LEVELS) * MAX_R;
-    return buildStarPoints(
-      angles,
-      angles.map(() => radius),
-      GRID_VALLEY_RATIO
-    );
+    return buildPolygonPoints(angles, radius);
   });
 
   const dataPoints = categories.map((cat, i) => {
