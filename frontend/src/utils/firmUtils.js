@@ -17,6 +17,25 @@ export function clampScore(score) {
   return Math.max(0, Math.min(100, Math.round(n)));
 }
 
+const METER_START_RGB = { r: 0x2d, g: 0x6b, b: 0xff };
+const METER_END_RGB = { r: 0x2a, g: 0xf5, b: 0xc8 };
+
+function mixChannel(start, end, ratio) {
+  return Math.round(start + (end - start) * ratio);
+}
+
+function toHex(value) {
+  return value.toString(16).padStart(2, "0");
+}
+
+export function scoreToMeterColor(score) {
+  const ratio = clampScore(score) / 100;
+  const r = mixChannel(METER_START_RGB.r, METER_END_RGB.r, ratio);
+  const g = mixChannel(METER_START_RGB.g, METER_END_RGB.g, ratio);
+  const b = mixChannel(METER_START_RGB.b, METER_END_RGB.b, ratio);
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
 export function ratingFromScore(score) {
   const s = clampScore(score);
   if (s >= 80) return { label: "Looks good", className: "lowRisk", ariaLabel: "Looks good" };

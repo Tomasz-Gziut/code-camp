@@ -2,8 +2,9 @@ import React from "react";
 import { getFirms } from "../api/firmsApi";
 import Highlight from "../components/Highlight";
 import Link from "../components/Link";
+import RadarChart from "../components/RadarChart";
 import { Badge, ScoreMeter } from "../components/ScoreBadge";
-import { firmPath, normalize, scoreFirm } from "../utils/firmUtils";
+import { firmPath, normalize, scoreFirm, scoreToMeterColor } from "../utils/firmUtils";
 
 export default function SearchPage() {
   const [firms, setFirms] = React.useState([]);
@@ -94,6 +95,15 @@ export default function SearchPage() {
             {matches.map((firm) => (
               <li key={firm.id} className="firmLi">
                 <Link to={firmPath(firm.id)} className="item itemLink" aria-label={`Open ${firm.name}`}>
+                  <div className="listMiniChart" aria-hidden="true">
+                    <RadarChart
+                      categories={firm.scoreHistory?.[0]?.categories ?? firm.categories ?? []}
+                      variant="mini"
+                      emphasized
+                      accentColor={scoreToMeterColor(firm.score)}
+                      ariaLabel={`Latest radar chart for ${firm.name}`}
+                    />
+                  </div>
                   <div className="left">
                     <div className="name">
                       <Highlight text={firm.name} query={query} />

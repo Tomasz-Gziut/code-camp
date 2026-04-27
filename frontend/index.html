@@ -6,43 +6,78 @@
     <title>Firm Safety Checker (Mock)</title>
     <style>
       :root {
-        color-scheme: light dark;
-        --bg: #0b0f19;
-        --card: #111827;
-        --muted: #94a3b8;
-        --text: #e5e7eb;
-        --border: rgba(148, 163, 184, 0.2);
-        --purple: #a855f7;
-        --purple2: #7c3aed;
+        color-scheme: dark;
+        --bg: #040814;
+        --bg-deep: #02040b;
+        --card: rgba(11, 18, 36, 0.78);
+        --muted: #8ea0c5;
+        --text: #f5f7ff;
+        --border: rgba(170, 194, 255, 0.16);
+        --accent: #7dd3fc;
+        --accent-2: #c084fc;
+        --meter-start: #2d6bff;
+        --meter-end: #2af5c8;
         --low: #22c55e;
         --med: #eab308;
         --high: #f97316;
         --vhigh: #ef4444;
-        --focus: rgba(168, 85, 247, 0.45);
-      }
-      @media (prefers-color-scheme: light) {
-        :root {
-          --bg: #f8fafc;
-          --card: #ffffff;
-          --muted: #64748b;
-          --text: #0f172a;
-          --border: rgba(15, 23, 42, 0.12);
-          --focus: rgba(124, 58, 237, 0.25);
-        }
+        --focus: rgba(125, 211, 252, 0.28);
       }
       * {
         box-sizing: border-box;
       }
+      html {
+        background: var(--bg-deep);
+      }
       body {
         margin: 0;
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
-          "Segoe UI Emoji";
-        background: radial-gradient(1200px 800px at 10% 0%, color-mix(in oklab, var(--purple2) 35%, transparent), transparent
-              55%),
-          radial-gradient(900px 700px at 90% 10%, color-mix(in oklab, var(--purple) 26%, transparent), transparent 50%),
-          var(--bg);
+        font-family: "Segoe UI", "Trebuchet MS", Verdana, sans-serif;
+        background: linear-gradient(180deg, #07101f 0%, var(--bg) 38%, var(--bg-deep) 100%);
         color: var(--text);
         min-height: 100vh;
+        overflow-x: hidden;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      .appShell {
+        position: relative;
+        min-height: 100vh;
+      }
+      .appContent {
+        position: relative;
+        z-index: 1;
+      }
+      .starfield {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .starfieldBase {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(1200px 800px at 10% 0%, rgba(118, 84, 255, 0.18), transparent 52%),
+          radial-gradient(900px 700px at 90% 12%, rgba(34, 211, 238, 0.12), transparent 48%),
+          linear-gradient(180deg, #07101f 0%, var(--bg) 38%, var(--bg-deep) 100%);
+      }
+      .starGradient {
+        position: absolute;
+        inset: 0;
+      }
+      .starGradientA {
+        background:
+          radial-gradient(44vw 34vw at 18% 12%, rgba(192, 132, 252, 0.16), transparent 60%),
+          radial-gradient(56vw 40vw at 62% 24%, rgba(59, 130, 246, 0.08), transparent 68%);
+        opacity: 0.9;
+      }
+      .starGradientB {
+        background:
+          radial-gradient(40vw 30vw at 82% 16%, rgba(125, 211, 252, 0.12), transparent 58%),
+          radial-gradient(46vw 32vw at 38% 10%, rgba(56, 189, 248, 0.05), transparent 70%);
+        opacity: 0.75;
       }
       .wrap {
         max-width: 860px;
@@ -67,11 +102,12 @@
         font-size: 14px;
       }
       .card {
-        background: color-mix(in oklab, var(--card) 92%, transparent);
+        background: color-mix(in srgb, var(--card) 100%, transparent);
         border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 16px;
-        backdrop-filter: blur(10px);
+        border-radius: 18px;
+        padding: 18px;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 22px 60px rgba(1, 4, 12, 0.36);
       }
       .row {
         display: flex;
@@ -86,7 +122,7 @@
       input[type="search"] {
         width: min(520px, 100%);
         border: 1px solid var(--border);
-        background: color-mix(in oklab, var(--card) 86%, transparent);
+        background: rgba(8, 13, 28, 0.72);
         color: var(--text);
         border-radius: 12px;
         padding: 12px 12px;
@@ -141,7 +177,7 @@
         padding: 12px;
         border-radius: 12px;
         border: 1px solid var(--border);
-        background: color-mix(in oklab, var(--card) 88%, transparent);
+        background: rgba(8, 13, 28, 0.56);
       }
       .itemLink {
         width: 100%;
@@ -152,8 +188,8 @@
         text-decoration: none;
       }
       .itemLink:hover {
-        border-color: color-mix(in oklab, var(--purple) 35%, var(--border));
-        background: color-mix(in oklab, var(--purple2) 8%, var(--card));
+        border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+        background: rgba(16, 24, 46, 0.88);
       }
       .itemLink:focus {
         outline: none;
@@ -168,7 +204,7 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        color: color-mix(in oklab, var(--purple) 85%, var(--text));
+        color: color-mix(in srgb, var(--accent) 78%, var(--text));
         text-decoration: none;
         font-size: 14px;
         font-weight: 650;
@@ -204,7 +240,14 @@
         margin-top: 2px;
       }
       .left {
+        flex: 1 1 auto;
         min-width: 0;
+      }
+      .listMiniChart {
+        flex: 0 0 auto;
+        width: 90px;
+        height: 90px;
+        opacity: 0.92;
       }
       .badge {
         flex: 0 0 auto;
@@ -217,10 +260,37 @@
         font-weight: 650;
         border: 1px solid var(--border);
       }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        border: 1px solid var(--border);
+      }
+      .tag.scoreTone {
+        color: var(--text);
+        padding: 0;
+        min-height: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+      .scoreTone {
+        color: color-mix(in oklab, var(--score-tone) 92%, var(--text));
+        border-color: color-mix(in oklab, var(--score-tone) 44%, var(--border));
+        background: color-mix(in oklab, var(--score-tone) 16%, transparent);
+      }
       .dot {
         width: 10px;
         height: 10px;
         border-radius: 50%;
+      }
+      .scoreTone .dot {
+        background: var(--score-tone);
       }
       .lowRisk {
         color: color-mix(in oklab, var(--low) 92%, var(--text));
@@ -263,6 +333,7 @@
         white-space: nowrap;
       }
       .meter {
+        position: relative;
         width: 88px;
         height: 8px;
         border-radius: 999px;
@@ -271,17 +342,22 @@
         overflow: hidden;
       }
       .meterFill {
+        position: absolute;
+        inset: 0;
         display: block;
-        height: 100%;
-        width: 0%;
-        background: linear-gradient(90deg, var(--vhigh), var(--high), var(--med), var(--low));
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--meter-start), var(--meter-end));
+        box-shadow:
+          0 0 14px color-mix(in srgb, var(--meter-start) 32%, transparent),
+          0 0 18px color-mix(in srgb, var(--meter-end) 26%, transparent);
+        clip-path: inset(0 calc(100% - var(--fill-percent, 0%)) 0 0 round 999px);
       }
       .panel {
         margin-top: 8px;
         padding: 12px;
         border-radius: 12px;
         border: 1px solid var(--border);
-        background: color-mix(in oklab, var(--card) 86%, transparent);
+        background: rgba(8, 13, 28, 0.58);
       }
       .panelTitle {
         font-size: 13px;
@@ -388,6 +464,13 @@
         gap: 10px;
       }
       @media (max-width: 640px) {
+        .item {
+          align-items: flex-start;
+        }
+        .listMiniChart {
+          width: 76px;
+          height: 76px;
+        }
         .chartWrap {
           max-width: none;
         }
@@ -420,7 +503,7 @@
         padding: 10px;
         border-radius: 12px;
         border: 1px solid var(--border);
-        background: color-mix(in oklab, var(--card) 88%, transparent);
+        background: rgba(8, 13, 28, 0.52);
       }
       .catLeft {
         min-width: 0;
@@ -439,7 +522,7 @@
       .catDetail {
         color: var(--muted);
         font-size: 13px;
-        margin-top: 2px;
+        margin-top: 8px;
       }
       .empty {
         padding: 14px 12px;
@@ -454,7 +537,7 @@
         font-size: 12px;
       }
       mark {
-        background: color-mix(in oklab, color-mix(in oklab, var(--purple) 55%, transparent) 60%, transparent);
+        background: rgba(192, 132, 252, 0.26);
         color: inherit;
         padding: 0 0.1em;
         border-radius: 4px;

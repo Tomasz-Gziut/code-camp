@@ -1,12 +1,14 @@
 import React from "react";
 import { clampScore } from "../utils/firmUtils";
-import { Badge, ScoreMeter } from "./ScoreBadge";
+import { Badge, ScoreMeter, Tag } from "./ScoreBadge";
 
 export default function CategoryRow({ category }) {
   return (
     <li className="catRow">
       <div className="catLeft">
-        <div className="catName">{category.name}</div>
+        <div className="catName">
+          <Tag score={category.score}>{category.name}</Tag>
+        </div>
         <div className="catDetail">{category.detail}</div>
       </div>
       <div className="catRight">

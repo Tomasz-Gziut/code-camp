@@ -119,13 +119,20 @@ export async function getFirms() {
 
   const typeMap = new Map(eventTypes.map((t) => [t.id, t]));
 
-  const scores = await Promise.all(
-    companies.map((c) =>
-      requestJson(`${API}/companies/${c.id}/score`).catch(() => null)
-    )
-  );
+  const [scores, eventsByCompany] = await Promise.all([
+    Promise.all(
+      companies.map((c) =>
+        requestJson(`${API}/companies/${c.id}/score`).catch(() => null)
+      )
+    ),
+    Promise.all(
+      companies.map((c) =>
+        requestJson(`${API}/companies/${c.id}/events`).catch(() => [])
+      )
+    ),
+  ]);
 
-  return companies.map((c, i) => buildFirm(c, scores[i], [], typeMap));
+  return companies.map((c, i) => buildFirm(c, scores[i], eventsByCompany[i], typeMap));
 }
 
 export async function getFirmById(firmId) {
