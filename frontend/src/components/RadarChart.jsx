@@ -98,9 +98,16 @@ function labelLineY(baseY, layout, lineIndex, lineCount) {
   return baseY + (lineIndex - (lineCount - 1) / 2) * layout.lineGap;
 }
 
-export default function RadarChart({ categories }) {
+export default function RadarChart({
+  categories,
+  variant = "full",
+  emphasized = false,
+  ariaLabel = "Radar chart of category scores",
+}) {
   const n = categories.length;
   if (!n) return null;
+
+  const isMini = variant === "mini";
 
   const angles = categories.map((_, i) => axisAngle(i, n));
 
@@ -124,107 +131,119 @@ export default function RadarChart({ categories }) {
       viewBox={`0 0 ${W} ${H}`}
       width="100%"
       height="auto"
-      aria-label="Radar chart of category scores"
+      aria-label={ariaLabel}
       style={{ display: "block", overflow: "visible" }}
     >
-      {/* Grid rings */}
-      {gridRings.map((pts, li) => (
-        <polygon
-          key={li}
-          points={ptStr(pts)}
-          fill="none"
-          stroke="color-mix(in oklab, var(--text) 18%, transparent)"
-          strokeWidth="1.5"
-        />
-      ))}
-
-      {/* Axis lines */}
-      {angles.map((a, i) => {
-        const end = polarPt(a, MAX_R);
-        return (
-          <line
-            key={i}
-            x1={CX}
-            y1={CY}
-            x2={end.x.toFixed(1)}
-            y2={end.y.toFixed(1)}
-            stroke="color-mix(in oklab, var(--text) 16%, transparent)"
-            strokeWidth="1"
+      {!isMini
+        ? gridRings.map((pts, li) => (
+          <polygon
+            key={li}
+            points={ptStr(pts)}
+            fill="none"
+            stroke="color-mix(in oklab, var(--text) 18%, transparent)"
+            strokeWidth="1.5"
           />
-        );
-      })}
+        ))
+        : null}
 
-      {/* Data polygon */}
+      {!isMini
+        ? angles.map((a, i) => {
+          const end = polarPt(a, MAX_R);
+          return (
+            <line
+              key={i}
+              x1={CX}
+              y1={CY}
+              x2={end.x.toFixed(1)}
+              y2={end.y.toFixed(1)}
+              stroke="color-mix(in oklab, var(--text) 16%, transparent)"
+              strokeWidth="1"
+            />
+          );
+        })
+        : null}
+
       <polygon
         points={ptStr(orderedDataPoints)}
-        fill="rgba(59,130,246,0.15)"
-        stroke="#3b82f6"
-        strokeWidth="2"
+        fill={isMini
+          ? emphasized
+            ? "color-mix(in oklab, var(--purple2) 34%, transparent)"
+            : "color-mix(in oklab, var(--text) 12%, transparent)"
+          : "rgba(59,130,246,0.15)"}
+        stroke={isMini
+          ? emphasized
+            ? "color-mix(in oklab, var(--purple) 88%, white)"
+            : "color-mix(in oklab, var(--text) 34%, transparent)"
+          : "#3b82f6"}
+        strokeWidth={isMini ? (emphasized ? "2.4" : "1.6") : "2"}
         strokeLinejoin="round"
       />
 
-      {/* Data dots */}
-      {dataPoints.map(({ pt: p }, i) => (
-        <circle
-          key={i}
-          cx={p.x.toFixed(1)}
-          cy={p.y.toFixed(1)}
-          r="4.5"
-          fill="#3b82f6"
-          stroke="#fff"
-          strokeWidth="1.5"
-        />
-      ))}
-
-      {/* Category name labels at each axis tip */}
-      {categories.map((cat, i) => {
-        const a = angles[i];
-        const scorePt = scoreLabelPt(a);
-        const layout = labelLayout(a);
-        const labelX = scorePt.x + layout.xOffset;
-        const labelY = scorePt.y + layout.yOffset;
-        const lines = splitName(cat.name).filter(Boolean);
-        return (
-          <text
+      {!isMini
+        ? dataPoints.map(({ pt: p }, i) => (
+          <circle
             key={i}
-            x={labelX.toFixed(1)}
-            y={labelY.toFixed(1)}
-            textAnchor={layout.textAnchor}
-            fontSize="12"
-            fill="var(--muted)"
-          >
-            {lines.map((line, lineIndex) => (
-              <tspan
-                key={`${cat.id ?? i}-${lineIndex}`}
-                x={labelX.toFixed(1)}
-                y={labelLineY(labelY, layout, lineIndex, lines.length).toFixed(1)}
-              >
-                {line}
-              </tspan>
-            ))}
-          </text>
-        );
-      })}
+            cx={p.x.toFixed(1)}
+            cy={p.y.toFixed(1)}
+            r="4.5"
+            fill="#3b82f6"
+            stroke="#fff"
+            strokeWidth="1.5"
+          />
+        ))
+        : null}
 
-      {/* Score values pinned to the outer chart edges */}
-      {categories.map((cat, i) => {
-        const a = angles[i];
-        const sp = scoreLabelPt(a);
-        return (
-          <text
-            key={cat.id ?? i}
-            x={sp.x.toFixed(1)}
-            y={sp.y.toFixed(1)}
-            textAnchor={textAnchor(a)}
-            dominantBaseline={dominantBaseline(a)}
-            fontSize="12"
-            fontWeight="700"
-            fill="#1d4ed8"
-          >
-            {cat.score}
-          </text>
-        );
-      })}
+      {!isMini
+        ? categories.map((cat, i) => {
+          const a = angles[i];
+          const scorePt = scoreLabelPt(a);
+          const layout = labelLayout(a);
+          const labelX = scorePt.x + layout.xOffset;
+          const labelY = scorePt.y + layout.yOffset;
+          const lines = splitName(cat.name).filter(Boolean);
+          return (
+            <text
+              key={i}
+              x={labelX.toFixed(1)}
+              y={labelY.toFixed(1)}
+              textAnchor={layout.textAnchor}
+              fontSize="12"
+              fill="var(--muted)"
+            >
+              {lines.map((line, lineIndex) => (
+                <tspan
+                  key={`${cat.id ?? i}-${lineIndex}`}
+                  x={labelX.toFixed(1)}
+                  y={labelLineY(labelY, layout, lineIndex, lines.length).toFixed(1)}
+                >
+                  {line}
+                </tspan>
+              ))}
+            </text>
+          );
+        })
+        : null}
+
+      {!isMini
+        ? categories.map((cat, i) => {
+          const a = angles[i];
+          const sp = scoreLabelPt(a);
+          return (
+            <text
+              key={cat.id ?? i}
+              x={sp.x.toFixed(1)}
+              y={sp.y.toFixed(1)}
+              textAnchor={textAnchor(a)}
+              dominantBaseline={dominantBaseline(a)}
+              fontSize="12"
+              fontWeight="700"
+              fill="#1d4ed8"
+            >
+              {cat.score}
+            </text>
+          );
+        })
+        : null}
     </svg>
   );
 }

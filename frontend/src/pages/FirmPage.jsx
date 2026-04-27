@@ -56,14 +56,23 @@ export default function FirmPage({ firmId }) {
   }, [firmId]);
 
   const scoreHistory = firm?.scoreHistory ?? [];
-  const activeSnapshot = scoreHistory.find((entry) => entry.id === selectedSnapshotId) ?? scoreHistory[0] ?? null;
+  const activeSnapshot =
+    scoreHistory.find((entry) => entry.id === selectedSnapshotId) ?? scoreHistory[0] ?? null;
+  const activeSnapshotIndex = scoreHistory.findIndex((entry) => entry.id === activeSnapshot?.id);
   const firmScore = clampScore(activeSnapshot?.score ?? firm?.score);
   const title = isLoading ? "Loading..." : firm?.name ?? "Firm not found";
+
+  function selectSnapshotByIndex(index) {
+    const nextSnapshot = scoreHistory[index];
+    if (!nextSnapshot) return;
+    setSelectedSnapshotId(nextSnapshot.id);
+  }
+
   return (
     <main className="wrap">
       <header className="pageHeader">
         <Link to="/" className="backLink">
-          ← Back
+          Back
         </Link>
         <h1>{title}</h1>
         <p className="sub">Demo only. Everything on this page is mock data.</p>
@@ -92,34 +101,64 @@ export default function FirmPage({ firmId }) {
           <div className="divider" role="presentation" />
 
           <div className="panelTitle">Score breakdown</div>
+          {activeSnapshot?.calculatedAt ? (
+            <div className="chartDateNav" aria-label="Nawigacja po datach score">
+              <button
+                type="button"
+                className="chartNavArrow"
+                onClick={() => selectSnapshotByIndex(activeSnapshotIndex - 1)}
+                disabled={activeSnapshotIndex <= 0}
+                aria-label="Pokaz poprzedni score"
+              >
+                {"<"}
+              </button>
+              <div className="chartDateLabel">{formatSnapshotDate(activeSnapshot.calculatedAt)}</div>
+              <button
+                type="button"
+                className="chartNavArrow"
+                onClick={() => selectSnapshotByIndex(activeSnapshotIndex + 1)}
+                disabled={activeSnapshotIndex >= scoreHistory.length - 1}
+                aria-label="Pokaz nastepny score"
+              >
+                {">"}
+              </button>
+            </div>
+          ) : null}
+
           <div className="chartWrap">
-            <RadarChart categories={activeSnapshot?.categories ?? firm.categories ?? []} />
+            <RadarChart
+              categories={activeSnapshot?.categories ?? firm.categories ?? []}
+              ariaLabel={`Radar chart for ${formatSnapshotDate(activeSnapshot?.calculatedAt)}`}
+            />
           </div>
 
           {scoreHistory.length > 1 ? (
-            <div className="scoreHistory" aria-label="Historyczne daty score">
+            <div className="snapshotGallery" aria-label="Historia wykresow">
               {scoreHistory.map((entry) => {
                 const isActive = entry.id === activeSnapshot?.id;
-                const label = formatSnapshotDate(entry.calculatedAt);
 
                 return (
                   <button
                     key={entry.id}
                     type="button"
-                    className={`historyChip${isActive ? " active" : ""}`}
+                    className={`snapshotMiniButton${isActive ? " active" : ""}`}
                     onClick={() => setSelectedSnapshotId(entry.id)}
                     aria-pressed={isActive}
+                    aria-label={`Pokaz score z dnia ${formatSnapshotDate(entry.calculatedAt)}`}
+                    title={formatSnapshotDate(entry.calculatedAt)}
                   >
-                    <span>{label}</span>
-                    {entry.isLatest ? <span className="historyChipTag">aktualny</span> : null}
+                    <div className="snapshotMini">
+                      <RadarChart
+                        categories={entry.categories ?? []}
+                        variant="mini"
+                        emphasized={isActive}
+                        ariaLabel={`Miniatura wykresu z dnia ${formatSnapshotDate(entry.calculatedAt)}`}
+                      />
+                    </div>
                   </button>
                 );
               })}
             </div>
-          ) : null}
-
-          {activeSnapshot?.calculatedAt ? (
-            <div className="chartMeta">Widok wykresu dla score z dnia {formatSnapshotDate(activeSnapshot.calculatedAt)}.</div>
           ) : null}
 
           <div className="divider" role="presentation" />

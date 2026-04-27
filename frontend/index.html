@@ -294,52 +294,86 @@
         max-width: 560px;
         margin: 0 auto;
       }
-      .scoreHistory {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 16px;
-        justify-content: center;
-      }
-      .historyChip {
-        display: inline-flex;
+      .chartDateNav {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr) 48px;
         align-items: center;
-        gap: 8px;
-        padding: 9px 12px;
-        border-radius: 999px;
+        gap: 14px;
+        max-width: 420px;
+        margin: 0 auto 14px;
+      }
+      .chartNavArrow {
+        width: 48px;
+        height: 48px;
         border: 1px solid var(--border);
-        background: color-mix(in oklab, var(--card) 88%, transparent);
+        border-radius: 16px;
+        background: color-mix(in oklab, var(--card) 90%, transparent);
         color: var(--text);
         font: inherit;
-        font-size: 13px;
+        font-size: 30px;
+        line-height: 1;
         cursor: pointer;
-        transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+        transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease, color 0.18s ease;
       }
-      .historyChip:hover {
-        border-color: color-mix(in oklab, var(--purple) 35%, var(--border));
-        background: color-mix(in oklab, var(--purple2) 10%, var(--card));
+      .chartNavArrow:hover:not(:disabled) {
+        border-color: color-mix(in oklab, var(--purple) 38%, var(--border));
+        background: color-mix(in oklab, var(--purple2) 12%, var(--card));
         transform: translateY(-1px);
       }
-      .historyChip:focus-visible {
+      .chartNavArrow:focus-visible,
+      .snapshotMiniButton:focus-visible {
         outline: none;
         box-shadow: 0 0 0 4px var(--focus);
       }
-      .historyChip.active {
-        border-color: color-mix(in oklab, var(--purple) 50%, var(--border));
-        background: color-mix(in oklab, var(--purple2) 16%, var(--card));
+      .chartNavArrow:disabled {
+        opacity: 0.38;
+        cursor: default;
       }
-      .historyChipTag {
-        color: color-mix(in oklab, var(--purple) 86%, var(--text));
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-      .chartMeta {
-        margin-top: 12px;
-        color: var(--muted);
-        font-size: 13px;
+      .chartDateLabel {
         text-align: center;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text);
+      }
+      .snapshotGallery {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .snapshotMiniButton {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 82px;
+        height: 82px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        transition: transform 0.18s ease;
+      }
+      .snapshotMiniButton:hover {
+        transform: translateY(-1px);
+      }
+      .snapshotMini {
+        width: 56px;
+        height: 56px;
+        transform: scale(1);
+        transition: transform 0.18s ease, filter 0.18s ease, opacity 0.18s ease;
+        opacity: 0.68;
+      }
+      .snapshotMiniButton:hover .snapshotMini {
+        opacity: 0.9;
+      }
+      .snapshotMiniButton.active .snapshotMini {
+        transform: scale(1.08);
+        opacity: 1;
+        filter: drop-shadow(0 0 10px color-mix(in oklab, var(--purple2) 44%, transparent));
       }
       .catList {
         list-style: none;
@@ -351,6 +385,27 @@
       @media (max-width: 640px) {
         .chartWrap {
           max-width: none;
+        }
+        .chartDateNav {
+          grid-template-columns: 42px minmax(0, 1fr) 42px;
+          gap: 10px;
+        }
+        .chartNavArrow {
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
+          font-size: 26px;
+        }
+        .chartDateLabel {
+          font-size: 12px;
+        }
+        .snapshotMiniButton {
+          width: 70px;
+          height: 70px;
+        }
+        .snapshotMini {
+          width: 48px;
+          height: 48px;
         }
       }
       .catRow {
