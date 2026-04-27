@@ -319,10 +319,6 @@ if __name__ == "__main__":
             "aliases": ["Orlen", "PKN Orlen S.A."],
         },
         {
-            "name": "mBank",
-            "aliases": ["BRE Bank"],
-        },
-        {
             "name": "CD Projekt",
             "aliases": ["CD Projekt Red", "CDPR"],
         },
@@ -331,47 +327,68 @@ if __name__ == "__main__":
             "aliases": ["Allegro.eu", "allegro.pl"],
         },
         {
-            "name": "PKO Bank Polski",
-            "aliases": ["PKO BP", "PKO"],
-        },
-        {
-            "name": "Pekao",
-            "aliases": ["Bank Pekao", "Pekao S.A."],
-        },
-        {
             "name": "KGHM Polska Miedź",
             "aliases": ["KGHM"],
         },
         {
             "name": "LPP",
-            "aliases": ["Reserved", "Cropp", "House LPP"],
+            "aliases": ["Reserved", "Cropp"],
         },
         {
-            "name": "Dino Polska",
-            "aliases": ["Dino"],
-        },
-        {
-            "name": "Cyfrowy Polsat",
-            "aliases": ["Polsat", "Plus Cyfrowy Polsat"],
+            "name": "PKO Bank Polski",
+            "aliases": ["PKO BP", "PKO"],
         },
     ]
 
-    result_json = collect_all_to_json(
-        COMPANIES,
-        fetch_content=True,
-        max_results_google=int(os.getenv("MAX_RESULTS_GOOGLE", "10")),
-        max_results_gdelt=int(os.getenv("MAX_RESULTS_GDELT", "250")),
-        gdelt_timespan=os.getenv("GDELT_TIMESPAN", "LAST30DAYS"),
-        use_gdelt=os.getenv("USE_GDELT", "true").strip().lower() in {"1", "true", "yes"},
-    )
+    auto_push = os.getenv("AUTO_PUSH_TO_BACKEND", "").strip().lower() in {"1", "true", "yes"}
+    fetch_content = True
+    max_results_google = int(os.getenv("MAX_RESULTS_GOOGLE", "10"))
+    max_results_gdelt = int(os.getenv("MAX_RESULTS_GDELT", "250"))
+    gdelt_timespan = os.getenv("GDELT_TIMESPAN", "LAST30DAYS")
+    use_gdelt = os.getenv("USE_GDELT", "true").strip().lower() in {"1", "true", "yes"}
 
-    # Zapisz do pliku
+    fetched_at = datetime.utcnow().isoformat()
+    all_companies_output = []
     output_path = "articles.json"
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(result_json)
 
-    if os.getenv("AUTO_PUSH_TO_BACKEND", "").strip().lower() in {"1", "true", "yes"}:
-        response = push_payload_to_backend(json.loads(result_json))
-        print(json.dumps(response, ensure_ascii=False, indent=2), flush=True)
+    for company in COMPANIES:
+        label = f"\n[{company['name']}]"
+        print(label.encode("ascii", errors="replace").decode("ascii"), flush=True)
+
+        articles = collect_for_company(
+            company["name"],
+            company.get("aliases"),
+            fetch_content=fetch_content,
+            max_results_google=max_results_google,
+            max_results_gdelt=max_results_gdelt,
+            gdelt_timespan=gdelt_timespan,
+            use_gdelt=use_gdelt,
+        )
+
+        company_data = {
+            "name": company["name"],
+            "aliases": company.get("aliases", []),
+            "article_count": len(articles),
+            "articles": [a.to_dict() for a in articles],
+        }
+        all_companies_output.append(company_data)
+
+        count_label = f"  -> {len(articles)} artykulow"
+        print(count_label.encode("ascii", errors="replace").decode("ascii"), flush=True)
+
+        # Push natychmiast po zebraniu danych dla tej firmy
+        if auto_push:
+            single_payload = {"fetched_at": fetched_at, "companies": [company_data]}
+            try:
+                response = push_payload_to_backend(single_payload)
+                result_label = f"  -> backend: ok ({response})"
+                print(result_label.encode("ascii", errors="replace").decode("ascii"), flush=True)
+            except Exception as e:
+                err_label = f"  -> backend: blad {e}"
+                print(err_label.encode("ascii", errors="replace").decode("ascii"), flush=True)
+
+        # Nadpisuj plik po każdej firmie — masz dane nawet jeśli scraper crashnie
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump({"fetched_at": fetched_at, "companies": all_companies_output}, f, ensure_ascii=False, indent=2)
 
     print(f"\n✓ Zapisano do {output_path}", flush=True)
