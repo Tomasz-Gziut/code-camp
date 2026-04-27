@@ -2,6 +2,7 @@ import React from "react";
 import { getFirmById } from "../api/firmsApi";
 import CategoryRow from "../components/CategoryRow";
 import Link from "../components/Link";
+import RadarChart from "../components/RadarChart";
 import { Badge, ScoreMeter } from "../components/ScoreBadge";
 import { clampScore } from "../utils/firmUtils";
 
@@ -70,6 +71,11 @@ export default function FirmPage({ firmId }) {
               <ScoreMeter score={firmScore} />
             </div>
           </div>
+
+          <div className="divider" role="presentation" />
+
+          <div className="panelTitle">Score breakdown</div>
+          <RadarChart categories={firm.categories ?? []} />
 
           <div className="divider" role="presentation" />
 
