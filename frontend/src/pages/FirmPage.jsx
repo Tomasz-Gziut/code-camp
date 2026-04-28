@@ -95,7 +95,6 @@ export default function FirmPage({ firmId }) {
           Back
         </Link>
         <h1>{title}</h1>
-        <p className="sub">Demo only. Everything on this page is mock data.</p>
       </header>
 
       {isLoading ? (
@@ -120,7 +119,7 @@ export default function FirmPage({ firmId }) {
 
           <div className="divider" role="presentation" />
 
-          <div className="panelTitle">Score breakdown</div>
+          <div className="panelTitle">Score chart</div>
           {activeSnapshot?.calculatedAt ? (
             <div className="chartDateNav" aria-label="Nawigacja po datach score">
               <button
@@ -184,18 +183,16 @@ export default function FirmPage({ firmId }) {
 
           <div className="divider" role="presentation" />
 
-          <div className="panelTitle">What this score is based on (mock)</div>
+          <div className="panelTitle">What this score is based on</div>
           <ul className="catList" aria-label="Risk categories">
             {(activeSnapshot?.categories ?? firm.categories ?? []).map((c) => (
               <CategoryRow key={c.id} category={c} />
             ))}
           </ul>
-
-          <div className="footerNote">In a real app, these categories would come from real checks and sources.</div>
         </section>
       ) : (
         <section className="card" aria-label="Not found">
-          <div className="empty">Firm not found in the mock list.</div>
+          <div className="empty">Company not found in the list.</div>
         </section>
       )}
     </main>

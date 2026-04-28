@@ -55,9 +55,10 @@ class Article(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
-    url = Column(String(500))
+    url = Column(Text)
     content = Column(Text)
     sentiment = Column(Float)
+    published_at = Column(DateTime, nullable=True)
 
     company_articles = relationship("CompanyArticle", back_populates="article", cascade="all, delete-orphan")
 
