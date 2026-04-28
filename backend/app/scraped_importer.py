@@ -1,3 +1,5 @@
+from datetime import datetime
+from email.utils import parsedate_to_datetime
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -8,8 +10,24 @@ from app.crud import (
     get_company_by_name_or_alias,
     get_event_by_company_article_and_type,
     get_event_types,
-    calculate_and_save_score,
+    generate_score_history,
 )
+
+
+def _parse_published(published_str: str | None) -> datetime | None:
+    if not published_str:
+        return None
+    # ISO format (GDELT: "2024-01-15T12:00:00")
+    try:
+        return datetime.fromisoformat(published_str)
+    except Exception:
+        pass
+    # RFC 2822 (Google News: "Mon, 06 Jan 2025 12:00:00 GMT")
+    try:
+        return parsedate_to_datetime(published_str).replace(tzinfo=None)
+    except Exception:
+        pass
+    return None
 
 
 def _ensure_default_event_types(db: Session) -> dict[str, models.EventType]:
@@ -70,6 +88,8 @@ def import_scraped_companies(
             db.flush()
 
         for scraped_article in scraped_company.articles:
+            published_at = _parse_published(scraped_article.published)
+
             article = get_article_by_url(db, scraped_article.url)
             if article is None:
                 article = models.Article(
@@ -77,6 +97,7 @@ def import_scraped_companies(
                     url=scraped_article.url,
                     content=scraped_article.content,
                     sentiment=None,
+                    published_at=published_at,
                 )
                 db.add(article)
                 db.flush()
@@ -89,6 +110,9 @@ def import_scraped_companies(
                     updated = True
                 if scraped_article.title and not article.title:
                     article.title = scraped_article.title
+                    updated = True
+                if published_at and not article.published_at:
+                    article.published_at = published_at
                     updated = True
                 if updated:
                     db.add(article)
@@ -118,6 +142,7 @@ def import_scraped_companies(
                             company_id=company.id,
                             type_id=event_type.id,
                             article_id=article.id,
+                            date=published_at or datetime.utcnow(),
                         )
                     )
                     events_created += 1
@@ -125,9 +150,18 @@ def import_scraped_companies(
 
     db.flush()
 
+    history_points_by_company: dict[int, int] = {}
+    for scraped_company in payload.companies:
+        company = get_company_by_name_or_alias(db, scraped_company.name)
+        if company and scraped_company.history_points:
+            history_points_by_company[company.id] = scraped_company.history_points
+
     for company_id in sorted(touched_company_ids):
-        calculate_and_save_score(db, company_id)
+        num_snapshots = history_points_by_company.get(company_id, 1)
+        generate_score_history(db, company_id, num_snapshots=num_snapshots)
         scores_created += 1
+
+    db.commit()
 
     return schemas.ScrapedImportResponse(
         companies_created=companies_created,

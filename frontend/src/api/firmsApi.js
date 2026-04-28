@@ -34,6 +34,17 @@ function normalizeScore(raw) {
   return Math.max(0, Math.min(100, Math.round(50 + raw / 2)));
 }
 
+function computeSnapshotIntensity(rawScore, latestRawScore) {
+  if (rawScore == null || latestRawScore == null) return 1;
+
+  const latestDistance = Math.abs(latestRawScore);
+  if (latestDistance < 0.001) {
+    return rawScore === latestRawScore ? 1 : Math.min(1, Math.abs(rawScore) / 100);
+  }
+
+  return Math.max(0, Math.min(1, Math.abs(rawScore) / latestDistance));
+}
+
 function buildDetails(company, rawScore) {
   const aliases = company.aliases?.map((a) => a.name).join(", ");
   const suffix = aliases ? ` Also known as: ${aliases}.` : "";
@@ -44,9 +55,10 @@ function buildDetails(company, rawScore) {
   return `Notable negative events on record.${suffix}`;
 }
 
-function buildSnapshot(company, scoreEntry, events, typeMap, fallbackId) {
+function buildSnapshot(company, scoreEntry, events, typeMap, fallbackId, latestRawScore) {
   const rawScore = scoreEntry?.score ?? null;
   const calculatedAt = scoreEntry?.calculated_at ?? null;
+  const intensity = computeSnapshotIntensity(rawScore, latestRawScore);
 
   return {
     id: fallbackId,
@@ -54,11 +66,11 @@ function buildSnapshot(company, scoreEntry, events, typeMap, fallbackId) {
     rawScore,
     calculatedAt,
     details: buildDetails(company, rawScore),
-    categories: buildCategories(events, typeMap, calculatedAt),
+    categories: buildCategories(events, typeMap, calculatedAt, intensity),
   };
 }
 
-function buildCategories(events, typeMap, snapshotDate) {
+function buildCategories(events, typeMap, snapshotDate, intensity = 1) {
   const countByType = {};
   const cutoff = snapshotDate ? Date.parse(snapshotDate) : Number.POSITIVE_INFINITY;
 
@@ -79,10 +91,11 @@ function buildCategories(events, typeMap, snapshotDate) {
     .map((et) => {
       const count = countByType[et.id] ?? 0;
       const rawCategoryScore = count > 0 ? (et.score ?? 0) * count : null;
+      const baseScore = count > 0 ? normalizeScore(rawCategoryScore) : 50;
       return {
         id: String(et.id),
         name: et.name,
-        score: count > 0 ? normalizeScore(rawCategoryScore) : 50,
+        score: Math.round(50 + (baseScore - 50) * intensity),
         detail: count > 0
           ? `${count} zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} tego typu.`
           : "Brak zdarzen tego typu.",
@@ -91,13 +104,14 @@ function buildCategories(events, typeMap, snapshotDate) {
 }
 
 function buildFirm(company, scoreData, events, typeMap) {
+  const latestRawScore = scoreData?.latest?.score ?? scoreData?.history?.[0]?.score ?? null;
   const history = (scoreData?.history ?? []).map((entry, index) => ({
-    ...buildSnapshot(company, entry, events, typeMap, `${company.id}-${entry.calculated_at}-${index}`),
+    ...buildSnapshot(company, entry, events, typeMap, `${company.id}-${entry.calculated_at}-${index}`, latestRawScore),
     isLatest: index === 0,
   }));
 
   const activeSnapshot = history[0] ?? {
-    ...buildSnapshot(company, scoreData?.latest ?? null, events, typeMap, `${company.id}-latest-fallback`),
+    ...buildSnapshot(company, scoreData?.latest ?? null, events, typeMap, `${company.id}-latest-fallback`, latestRawScore),
     isLatest: true,
   };
 
