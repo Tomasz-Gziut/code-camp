@@ -1,5 +1,9 @@
 # Code Camp
-
+## Autorzy
+- Tomasz Gziut  
+- Wojciech Sowa  
+- Aleksy Szłapa  
+- Volodymyr Kot 
 ## Szybki start
 
 W katalogu głównym projektu uruchom:
