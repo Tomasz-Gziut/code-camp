@@ -7,6 +7,34 @@ const CATEGORY_ORDER = [
   "nadzor regulacyjny",
 ];
 
+const CATEGORY_PRESENTATION = {
+  "naruszenie danych": {
+    displayName: "Bezpieczenstwo danych",
+    emptyDetail: "Brak negatywnych zdarzen w tym obszarze.",
+    eventDetail: (count) => `${count} negatywne zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} w tym obszarze.`,
+  },
+  "partnerstwa i wzrost": {
+    displayName: "Partnerstwa i wzrost",
+    emptyDetail: "Brak pozytywnych zdarzen tego typu.",
+    eventDetail: (count) => `${count} pozytywne zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} tego typu.`,
+  },
+  "postepowania prawne": {
+    displayName: "Stabilnosc prawna",
+    emptyDetail: "Brak negatywnych zdarzen prawnych.",
+    eventDetail: (count) => `${count} negatywne zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} prawne.`,
+  },
+  "nagrody i reputacja": {
+    displayName: "Nagrody i reputacja",
+    emptyDetail: "Brak pozytywnych zdarzen tego typu.",
+    eventDetail: (count) => `${count} pozytywne zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} tego typu.`,
+  },
+  "nadzor regulacyjny": {
+    displayName: "Zgodnosc regulacyjna",
+    emptyDetail: "Brak negatywnych sygnalow regulacyjnych.",
+    eventDetail: (count) => `${count} negatywne zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} regulacyjne.`,
+  },
+};
+
 function normalizeCategoryName(name) {
   return String(name ?? "")
     .normalize("NFD")
@@ -32,6 +60,21 @@ async function requestJson(path) {
 function normalizeScore(raw) {
   if (raw == null) return 50;
   return Math.max(0, Math.min(100, Math.round(50 + raw / 2)));
+}
+
+function categoryDisplayScore(rawCategoryScore, count, intensity = 1) {
+  if (count <= 0) {
+    return 50;
+  }
+
+  const baseScore = normalizeScore(rawCategoryScore);
+  return Math.round(50 + (baseScore - 50) * intensity);
+}
+
+function buildArticleLabel(article, fallbackIndex) {
+  if (article?.title?.trim()) return article.title.trim();
+  if (article?.url?.trim()) return article.url.trim();
+  return `Artykul ${fallbackIndex + 1}`;
 }
 
 function computeSnapshotIntensity(rawScore, latestRawScore) {
@@ -72,6 +115,7 @@ function buildSnapshot(company, scoreEntry, events, typeMap, fallbackId, latestR
 
 function buildCategories(events, typeMap, snapshotDate, intensity = 1) {
   const countByType = {};
+  const sourcesByType = {};
   const cutoff = snapshotDate ? Date.parse(snapshotDate) : Number.POSITIVE_INFINITY;
 
   for (const ev of events) {
@@ -81,6 +125,20 @@ function buildCategories(events, typeMap, snapshotDate, intensity = 1) {
     }
 
     countByType[ev.type_id] = (countByType[ev.type_id] || 0) + 1;
+
+    if (ev.article?.url) {
+      const existingSources = sourcesByType[ev.type_id] || [];
+      const alreadyIncluded = existingSources.some((source) => source.url === ev.article.url);
+
+      if (!alreadyIncluded) {
+        existingSources.push({
+          title: buildArticleLabel(ev.article, existingSources.length),
+          url: ev.article.url,
+        });
+      }
+
+      sourcesByType[ev.type_id] = existingSources;
+    }
   }
 
   // Only render the canonical 5 categories so stale DB rows cannot reintroduce a 6th axis.
@@ -90,15 +148,20 @@ function buildCategories(events, typeMap, snapshotDate, intensity = 1) {
     .filter(Boolean)
     .map((et) => {
       const count = countByType[et.id] ?? 0;
+      const normalizedName = normalizeCategoryName(et.name);
+      const presentation = CATEGORY_PRESENTATION[normalizedName] ?? {
+        displayName: et.name,
+        emptyDetail: "Brak zdarzen tego typu.",
+        eventDetail: (eventCount) =>
+          `${eventCount} zdarzenie${eventCount === 1 ? "" : eventCount < 5 ? "a" : "n"} tego typu.`,
+      };
       const rawCategoryScore = count > 0 ? (et.score ?? 0) * count : null;
-      const baseScore = count > 0 ? normalizeScore(rawCategoryScore) : 50;
       return {
         id: String(et.id),
-        name: et.name,
-        score: Math.round(50 + (baseScore - 50) * intensity),
-        detail: count > 0
-          ? `${count} zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} tego typu.`
-          : "Brak zdarzen tego typu.",
+        name: presentation.displayName,
+        score: categoryDisplayScore(rawCategoryScore, count, intensity),
+        detail: count > 0 ? presentation.eventDetail(count) : presentation.emptyDetail,
+        sources: sourcesByType[et.id] ?? [],
       };
     });
 }

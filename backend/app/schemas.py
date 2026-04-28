@@ -97,6 +97,7 @@ class EventOut(BaseModel):
     company_id: int
     type_id: int
     article_id: Optional[int] = None
+    article: Optional[ArticleOut] = None
     date: datetime
     model_config = {"from_attributes": True}
 

@@ -74,6 +74,7 @@ class Event(Base):
 
     company = relationship("Company", back_populates="events")
     event_type = relationship("EventType", back_populates="events")
+    article = relationship("Article", primaryjoin="foreign(Event.article_id) == Article.id")
 
 
 class CompanyArticle(Base):
