@@ -62,13 +62,9 @@ function normalizeScore(raw) {
   return Math.max(0, Math.min(100, Math.round(50 + raw / 2)));
 }
 
-function categoryDisplayScore(rawCategoryScore, categoryScore, count) {
+function categoryDisplayScore(rawCategoryScore, count) {
   if (count <= 0) {
-    return categoryScore < 0 ? 100 : 50;
-  }
-
-  if (categoryScore < 0) {
-    return Math.max(0, Math.min(100, Math.round(100 + rawCategoryScore)));
+    return 50;
   }
 
   return normalizeScore(rawCategoryScore);
@@ -129,7 +125,7 @@ function buildCategories(events, typeMap, snapshotDate) {
       return {
         id: String(et.id),
         name: presentation.displayName,
-        score: categoryDisplayScore(rawCategoryScore, et.score ?? 0, count),
+        score: categoryDisplayScore(rawCategoryScore, count),
         detail: count > 0 ? presentation.eventDetail(count) : presentation.emptyDetail,
       };
     });
