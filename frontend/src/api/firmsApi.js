@@ -70,6 +70,12 @@ function categoryDisplayScore(rawCategoryScore, count) {
   return normalizeScore(rawCategoryScore);
 }
 
+function buildArticleLabel(article, fallbackIndex) {
+  if (article?.title?.trim()) return article.title.trim();
+  if (article?.url?.trim()) return article.url.trim();
+  return `Artykul ${fallbackIndex + 1}`;
+}
+
 function buildDetails(company, rawScore) {
   const aliases = company.aliases?.map((a) => a.name).join(", ");
   const suffix = aliases ? ` Also known as: ${aliases}.` : "";
@@ -96,6 +102,7 @@ function buildSnapshot(company, scoreEntry, events, typeMap, fallbackId) {
 
 function buildCategories(events, typeMap, snapshotDate) {
   const countByType = {};
+  const sourcesByType = {};
   const cutoff = snapshotDate ? Date.parse(snapshotDate) : Number.POSITIVE_INFINITY;
 
   for (const ev of events) {
@@ -105,6 +112,20 @@ function buildCategories(events, typeMap, snapshotDate) {
     }
 
     countByType[ev.type_id] = (countByType[ev.type_id] || 0) + 1;
+
+    if (ev.article?.url) {
+      const existingSources = sourcesByType[ev.type_id] || [];
+      const alreadyIncluded = existingSources.some((source) => source.url === ev.article.url);
+
+      if (!alreadyIncluded) {
+        existingSources.push({
+          title: buildArticleLabel(ev.article, existingSources.length),
+          url: ev.article.url,
+        });
+      }
+
+      sourcesByType[ev.type_id] = existingSources;
+    }
   }
 
   // Only render the canonical 5 categories so stale DB rows cannot reintroduce a 6th axis.
@@ -127,6 +148,7 @@ function buildCategories(events, typeMap, snapshotDate) {
         name: presentation.displayName,
         score: categoryDisplayScore(rawCategoryScore, count),
         detail: count > 0 ? presentation.eventDetail(count) : presentation.emptyDetail,
+        sources: sourcesByType[et.id] ?? [],
       };
     });
 }
