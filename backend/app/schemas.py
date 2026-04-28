@@ -137,6 +137,7 @@ class ScrapedCompanyCreate(BaseModel):
     aliases: List[str] = []
     article_count: Optional[int] = None
     articles: List[ScrapedArticleCreate] = []
+    history_points: Optional[int] = None  # ile punktów historii score wygenerować (None = 1)
 
 
 class ScrapedImportRequest(BaseModel):

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from app import models, schemas
 from app.company_matcher import normalize_text
@@ -164,6 +165,71 @@ def calculate_and_save_score(db: Session, company_id: int) -> models.CompanyScor
     db.commit()
     db.refresh(score_record)
     return score_record
+
+
+def generate_score_history(
+    db: Session,
+    company_id: int,
+    num_snapshots: int = 1,
+) -> models.CompanyScore | None:
+    """
+    Generuje historię score dla firmy.
+    num_snapshots=1 → jeden punkt (aktualny score).
+    num_snapshots>1 → dokładnie N równomiernie rozłożonych punktów od
+                      daty najstarszego eventu do teraz.
+    Zastępuje istniejące snapshoty przy każdym imporcie.
+    """
+    event_rows = (
+        db.query(models.Event, models.EventType)
+        .join(models.EventType, models.Event.type_id == models.EventType.id)
+        .filter(models.Event.company_id == company_id)
+        .order_by(models.Event.date)
+        .all()
+    )
+
+    db.query(models.CompanyScore).filter(models.CompanyScore.company_id == company_id).delete()
+
+    if not event_rows:
+        return None
+
+    now = datetime.utcnow()
+    oldest = event_rows[0][0].date
+
+    if num_snapshots <= 1:
+        snapshot_dates = [now]
+    else:
+        span = now - oldest
+        snapshot_dates = [
+            oldest + span * i / (num_snapshots - 1)
+            for i in range(num_snapshots)
+        ]
+        snapshot_dates[-1] = now  # ostatni punkt zawsze = teraz
+
+    article_ids = list({e.article_id for e, _ in event_rows if e.article_id is not None})
+    articles_by_id: dict[int, models.Article] = {}
+    if article_ids:
+        for a in db.query(models.Article).filter(models.Article.id.in_(article_ids)).all():
+            articles_by_id[a.id] = a
+
+    last_record = None
+    for snap_date in snapshot_dates:
+        active = [(e, et) for e, et in event_rows if e.date <= snap_date]
+        event_score = sum((et.score or 0) for _, et in active)
+        sentiment_score = sum(
+            (articles_by_id[e.article_id].sentiment or 0.0) * 10
+            for e, _ in active
+            if e.article_id and e.article_id in articles_by_id
+        )
+        record = models.CompanyScore(
+            company_id=company_id,
+            score=float(event_score) + sentiment_score,
+            calculated_at=snap_date,
+        )
+        db.add(record)
+        last_record = record
+
+    db.flush()
+    return last_record
 
 
 def get_company_scores(db: Session, company_id: int) -> list[models.CompanyScore]:

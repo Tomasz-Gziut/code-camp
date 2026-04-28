@@ -7,6 +7,7 @@ import asyncio
 import feedparser
 import json
 import os
+import time
 import trafilatura
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field, asdict
@@ -177,7 +178,8 @@ def fetch_gdelt_news(
     url = f"https://api.gdeltproject.org/api/v2/doc/doc?{params}"
 
     try:
-        with urlopen(url, timeout=20) as response:
+        time.sleep(1)  # unikaj 429 od GDELT
+        with urlopen(url, timeout=30) as response:
             data = json.loads(response.read().decode())
     except Exception as e:
         label = f"  [GDELT] blad pobierania dla '{query}': {e}"
@@ -313,39 +315,52 @@ def collect_all_to_json(
 # Uruchomienie demo
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
+    # history_points  — ile punktów na wykresie historii (1 = tylko aktualny)
+    # gdelt_timespan  — None = bez GDELT (szybkie), string = pobierz historyczne artykuły
     COMPANIES = [
         {
             "name": "PKN Orlen",
             "aliases": ["Orlen", "PKN Orlen S.A."],
+            "history_points": 2,
+            "gdelt_timespan": "LAST3MONTHS",
         },
         {
             "name": "CD Projekt",
             "aliases": ["CD Projekt Red", "CDPR"],
+            "history_points": 3,
+            "gdelt_timespan": "LAST3MONTHS",
         },
         {
             "name": "Allegro",
             "aliases": ["Allegro.eu", "allegro.pl"],
+            "history_points": 1,
+            "gdelt_timespan": None,
         },
         {
             "name": "KGHM Polska Miedź",
             "aliases": ["KGHM"],
+            "history_points": 1,
+            "gdelt_timespan": None,
         },
         {
             "name": "LPP",
             "aliases": ["Reserved", "Cropp"],
+            "history_points": 1,
+            "gdelt_timespan": None,
         },
         {
             "name": "PKO Bank Polski",
             "aliases": ["PKO BP", "PKO"],
+            "history_points": 1,
+            "gdelt_timespan": None,
         },
     ]
 
     auto_push = os.getenv("AUTO_PUSH_TO_BACKEND", "").strip().lower() in {"1", "true", "yes"}
-    fetch_content = True
+    fetch_content = os.getenv("FETCH_CONTENT", "false").strip().lower() in {"1", "true", "yes"}
     max_results_google = int(os.getenv("MAX_RESULTS_GOOGLE", "10"))
-    max_results_gdelt = int(os.getenv("MAX_RESULTS_GDELT", "250"))
-    gdelt_timespan = os.getenv("GDELT_TIMESPAN", "LAST30DAYS")
-    use_gdelt = os.getenv("USE_GDELT", "true").strip().lower() in {"1", "true", "yes"}
+    max_results_gdelt = int(os.getenv("MAX_RESULTS_GDELT", "50"))
+    # gdelt_timespan i use_gdelt są teraz per-company (w COMPANIES powyżej)
 
     fetched_at = datetime.utcnow().isoformat()
     all_companies_output = []
@@ -355,14 +370,17 @@ if __name__ == "__main__":
         label = f"\n[{company['name']}]"
         print(label.encode("ascii", errors="replace").decode("ascii"), flush=True)
 
+        company_gdelt_timespan = company.get("gdelt_timespan")
+        use_gdelt_for_company = company_gdelt_timespan is not None
+
         articles = collect_for_company(
             company["name"],
             company.get("aliases"),
             fetch_content=fetch_content,
             max_results_google=max_results_google,
             max_results_gdelt=max_results_gdelt,
-            gdelt_timespan=gdelt_timespan,
-            use_gdelt=use_gdelt,
+            gdelt_timespan=company_gdelt_timespan or "LAST7DAYS",
+            use_gdelt=use_gdelt_for_company,
         )
 
         company_data = {
@@ -370,6 +388,7 @@ if __name__ == "__main__":
             "aliases": company.get("aliases", []),
             "article_count": len(articles),
             "articles": [a.to_dict() for a in articles],
+            "history_points": company.get("history_points", 1),
         }
         all_companies_output.append(company_data)
 
