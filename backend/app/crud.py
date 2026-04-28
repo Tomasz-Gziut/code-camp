@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlalchemy.orm import Session
 from app import models, schemas
 from app.company_matcher import normalize_text
@@ -140,24 +140,28 @@ def get_event_by_company_article_and_type(
     )
 
 
+def _get_company_articles(db: Session, company_id: int) -> list[models.Article]:
+    return (
+        db.query(models.Article)
+        .join(models.CompanyArticle, models.CompanyArticle.article_id == models.Article.id)
+        .filter(models.CompanyArticle.company_id == company_id)
+        .all()
+    )
+
+
 # --- Scoring ---
 
 def calculate_and_save_score(db: Session, company_id: int) -> models.CompanyScore:
-    events = (
+    event_rows = (
         db.query(models.Event, models.EventType)
         .join(models.EventType, models.Event.type_id == models.EventType.id)
         .filter(models.Event.company_id == company_id)
         .all()
     )
+    company_articles = _get_company_articles(db, company_id)
 
-    event_score = sum((et.score or 0) for _, et in events)
-
-    article_ids = [e.article_id for e, _ in events if e.article_id is not None]
-    sentiment_score = 0.0
-    if article_ids:
-        articles = db.query(models.Article).filter(models.Article.id.in_(article_ids)).all()
-        sentiment_score = sum((a.sentiment or 0.0) * 10 for a in articles)
-
+    event_score = sum((event_type.score or 0) for _, event_type in event_rows)
+    sentiment_score = sum((article.sentiment or 0.0) * 10 for article in company_articles)
     total = float(event_score) + sentiment_score
 
     score_record = models.CompanyScore(company_id=company_id, score=total)
@@ -172,13 +176,6 @@ def generate_score_history(
     company_id: int,
     num_snapshots: int = 1,
 ) -> models.CompanyScore | None:
-    """
-    Generuje historię score dla firmy.
-    num_snapshots=1 → jeden punkt (aktualny score).
-    num_snapshots>1 → dokładnie N równomiernie rozłożonych punktów od
-                      daty najstarszego eventu do teraz.
-    Zastępuje istniejące snapshoty przy każdym imporcie.
-    """
     event_rows = (
         db.query(models.Event, models.EventType)
         .join(models.EventType, models.Event.type_id == models.EventType.id)
@@ -186,44 +183,67 @@ def generate_score_history(
         .order_by(models.Event.date)
         .all()
     )
+    company_articles = _get_company_articles(db, company_id)
 
     db.query(models.CompanyScore).filter(models.CompanyScore.company_id == company_id).delete()
 
-    if not event_rows:
+    if not event_rows and not company_articles:
         return None
 
     now = datetime.utcnow()
-    oldest = event_rows[0][0].date
+    article_dates_by_id = {
+        article.id: article.published_at or now
+        for article in company_articles
+    }
 
-    if num_snapshots <= 1:
-        snapshot_dates = [now]
-    else:
-        span = now - oldest
-        snapshot_dates = [
-            oldest + span * i / (num_snapshots - 1)
-            for i in range(num_snapshots)
-        ]
-        snapshot_dates[-1] = now  # ostatni punkt zawsze = teraz
+    contributions: list[dict[str, object]] = []
 
-    article_ids = list({e.article_id for e, _ in event_rows if e.article_id is not None})
-    articles_by_id: dict[int, models.Article] = {}
-    if article_ids:
-        for a in db.query(models.Article).filter(models.Article.id.in_(article_ids)).all():
-            articles_by_id[a.id] = a
+    for article in company_articles:
+        value = float((article.sentiment or 0.0) * 10)
+        if value:
+            contributions.append({
+                "date": article.published_at or now,
+                "value": value,
+            })
+
+    for event, event_type in event_rows:
+        value = float(event_type.score or 0)
+        if value:
+            contributions.append({
+                "date": event.date or article_dates_by_id.get(event.article_id) or now,
+                "value": value,
+            })
+
+    if not contributions:
+        contributions.append({
+            "date": now,
+            "value": 0.0,
+        })
+
+    contributions.sort(key=lambda item: item["date"])
+    contribution_count = len(contributions)
+    snapshot_count = max(1, min(num_snapshots, contribution_count))
+
+    def _score_for_cutoff(cutoff: int) -> float:
+        return float(sum(item["value"] for item in contributions[:cutoff]))
+
+    cutoffs = []
+    for i in range(snapshot_count):
+        if i == snapshot_count - 1:
+            cutoff = contribution_count
+        else:
+            cutoff = max(1, min(contribution_count, round(((i + 1) * contribution_count) / snapshot_count)))
+        if cutoffs and cutoff <= cutoffs[-1]:
+            cutoff = min(contribution_count, cutoffs[-1] + 1)
+        cutoffs.append(cutoff)
 
     last_record = None
-    for snap_date in snapshot_dates:
-        active = [(e, et) for e, et in event_rows if e.date <= snap_date]
-        event_score = sum((et.score or 0) for _, et in active)
-        sentiment_score = sum(
-            (articles_by_id[e.article_id].sentiment or 0.0) * 10
-            for e, _ in active
-            if e.article_id and e.article_id in articles_by_id
-        )
+    for i, cutoff in enumerate(cutoffs):
+        calculated_at = contributions[cutoff - 1]["date"] if i < snapshot_count - 1 else now
         record = models.CompanyScore(
             company_id=company_id,
-            score=float(event_score) + sentiment_score,
-            calculated_at=snap_date,
+            score=_score_for_cutoff(cutoff),
+            calculated_at=calculated_at,
         )
         db.add(record)
         last_record = record
