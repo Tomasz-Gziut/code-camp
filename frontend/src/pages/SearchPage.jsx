@@ -55,14 +55,13 @@ export default function SearchPage() {
   return (
     <main className="wrap">
       <header>
-        <h1>Firm Safety Checker</h1>
-        <p className="sub">Demo only. These scores are made up and not real safety advice.</p>
+        <h1>Stellarrate</h1>
+        <p className="sub">See yourself which company is the biggest star of them all.</p>
       </header>
 
       <section className="card" aria-label="Search">
         <div className="row">
           <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
-            <label htmlFor="query">Search a firm</label>
             <input
               ref={inputRef}
               id="query"
@@ -73,7 +72,6 @@ export default function SearchPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <div className="hint">Try: Acme, Globex, Umbrella, Stark, Wayne</div>
           </div>
         </div>
 
@@ -87,9 +85,9 @@ export default function SearchPage() {
         </div>
 
         {isLoading ? (
-          <div className="empty">Loading firms...</div>
+          <div className="empty">Loading companies...</div>
         ) : error ? (
-          <div className="empty">Failed to load firms.</div>
+          <div className="empty">Failed to load companies.</div>
         ) : matches.length ? (
           <ul className="list" aria-label="Firm results">
             {matches.map((firm) => (
@@ -119,10 +117,10 @@ export default function SearchPage() {
             ))}
           </ul>
         ) : (
-          <div className="empty">No firms found in the mock list.</div>
+          <div className="empty">No companies found in the list.</div>
         )}
 
-        <div className="footerNote">Risk labels and scores are mock values for UI demo only.</div>
+        <div className="footerNote">Remember scores are based on internet articles, they might be wrong.</div>
       </section>
     </main>
   );
