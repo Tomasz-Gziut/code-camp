@@ -7,6 +7,34 @@ const CATEGORY_ORDER = [
   "nadzor regulacyjny",
 ];
 
+const CATEGORY_PRESENTATION = {
+  "naruszenie danych": {
+    displayName: "Bezpieczenstwo danych",
+    emptyDetail: "Brak negatywnych zdarzen w tym obszarze.",
+    eventDetail: (count) => `${count} negatywne zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} w tym obszarze.`,
+  },
+  "partnerstwa i wzrost": {
+    displayName: "Partnerstwa i wzrost",
+    emptyDetail: "Brak pozytywnych zdarzen tego typu.",
+    eventDetail: (count) => `${count} pozytywne zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} tego typu.`,
+  },
+  "postepowania prawne": {
+    displayName: "Stabilnosc prawna",
+    emptyDetail: "Brak negatywnych zdarzen prawnych.",
+    eventDetail: (count) => `${count} negatywne zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} prawne.`,
+  },
+  "nagrody i reputacja": {
+    displayName: "Nagrody i reputacja",
+    emptyDetail: "Brak pozytywnych zdarzen tego typu.",
+    eventDetail: (count) => `${count} pozytywne zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} tego typu.`,
+  },
+  "nadzor regulacyjny": {
+    displayName: "Zgodnosc regulacyjna",
+    emptyDetail: "Brak negatywnych sygnalow regulacyjnych.",
+    eventDetail: (count) => `${count} negatywne zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} regulacyjne.`,
+  },
+};
+
 function normalizeCategoryName(name) {
   return String(name ?? "")
     .normalize("NFD")
@@ -32,6 +60,18 @@ async function requestJson(path) {
 function normalizeScore(raw) {
   if (raw == null) return 50;
   return Math.max(0, Math.min(100, Math.round(50 + raw / 2)));
+}
+
+function categoryDisplayScore(rawCategoryScore, categoryScore, count) {
+  if (count <= 0) {
+    return categoryScore < 0 ? 100 : 50;
+  }
+
+  if (categoryScore < 0) {
+    return Math.max(0, Math.min(100, Math.round(100 + rawCategoryScore)));
+  }
+
+  return normalizeScore(rawCategoryScore);
 }
 
 function buildDetails(company, rawScore) {
@@ -78,14 +118,19 @@ function buildCategories(events, typeMap, snapshotDate) {
     .filter(Boolean)
     .map((et) => {
       const count = countByType[et.id] ?? 0;
+      const normalizedName = normalizeCategoryName(et.name);
+      const presentation = CATEGORY_PRESENTATION[normalizedName] ?? {
+        displayName: et.name,
+        emptyDetail: "Brak zdarzen tego typu.",
+        eventDetail: (eventCount) =>
+          `${eventCount} zdarzenie${eventCount === 1 ? "" : eventCount < 5 ? "a" : "n"} tego typu.`,
+      };
       const rawCategoryScore = count > 0 ? (et.score ?? 0) * count : null;
       return {
         id: String(et.id),
-        name: et.name,
-        score: count > 0 ? normalizeScore(rawCategoryScore) : 50,
-        detail: count > 0
-          ? `${count} zdarzenie${count === 1 ? "" : count < 5 ? "a" : "n"} tego typu.`
-          : "Brak zdarzen tego typu.",
+        name: presentation.displayName,
+        score: categoryDisplayScore(rawCategoryScore, et.score ?? 0, count),
+        detail: count > 0 ? presentation.eventDetail(count) : presentation.emptyDetail,
       };
     });
 }
