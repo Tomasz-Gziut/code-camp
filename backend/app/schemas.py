@@ -1,15 +1,17 @@
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 
-# --- CompanyAlias ---
 class CompanyAliasBase(BaseModel):
     name: str
     type: Optional[str] = None
 
+
 class CompanyAliasCreate(CompanyAliasBase):
     pass
+
 
 class CompanyAliasOut(CompanyAliasBase):
     id: int
@@ -17,13 +19,14 @@ class CompanyAliasOut(CompanyAliasBase):
     model_config = {"from_attributes": True}
 
 
-# --- CompanyIdentifier ---
 class CompanyIdentifierBase(BaseModel):
     type: Optional[str] = None
     value: str
 
+
 class CompanyIdentifierCreate(CompanyIdentifierBase):
     pass
+
 
 class CompanyIdentifierOut(CompanyIdentifierBase):
     id: int
@@ -31,28 +34,28 @@ class CompanyIdentifierOut(CompanyIdentifierBase):
     model_config = {"from_attributes": True}
 
 
-# --- Company ---
 class CompanyCreate(BaseModel):
     full_name: str
     nip: Optional[str] = None
-    aliases: Optional[List[CompanyAliasCreate]] = []
-    identifiers: Optional[List[CompanyIdentifierCreate]] = []
+    aliases: List[CompanyAliasCreate] = Field(default_factory=list)
+    identifiers: List[CompanyIdentifierCreate] = Field(default_factory=list)
+
 
 class CompanyOut(BaseModel):
     id: int
     full_name: str
     nip: Optional[str] = None
-    aliases: List[CompanyAliasOut] = []
-    identifiers: List[CompanyIdentifierOut] = []
+    aliases: List[CompanyAliasOut] = Field(default_factory=list)
+    identifiers: List[CompanyIdentifierOut] = Field(default_factory=list)
     model_config = {"from_attributes": True}
 
 
-# --- Article ---
 class ArticleCreate(BaseModel):
     title: str
     url: Optional[str] = None
     content: Optional[str] = None
     sentiment: Optional[float] = None
+
 
 class ArticleOut(ArticleCreate):
     id: int
@@ -68,29 +71,29 @@ class CompanyDetectionCandidate(BaseModel):
     company_id: int
     full_name: str
     score: float
-    matched_aliases: List[str] = []
+    matched_aliases: List[str] = Field(default_factory=list)
 
 
 class CompanyDetectionResponse(BaseModel):
     best_match: Optional[CompanyDetectionCandidate] = None
-    candidates: List[CompanyDetectionCandidate] = []
+    candidates: List[CompanyDetectionCandidate] = Field(default_factory=list)
 
 
-# --- EventType ---
 class EventTypeCreate(BaseModel):
     name: str
     score: Optional[int] = None
+
 
 class EventTypeOut(EventTypeCreate):
     id: int
     model_config = {"from_attributes": True}
 
 
-# --- Event ---
 class EventCreate(BaseModel):
     company_id: int
     type_id: int
     article_id: Optional[int] = None
+
 
 class EventOut(BaseModel):
     id: int
@@ -102,7 +105,6 @@ class EventOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# --- CompanyScore ---
 class CompanyScoreOut(BaseModel):
     id: int
     company_id: int
@@ -110,12 +112,12 @@ class CompanyScoreOut(BaseModel):
     calculated_at: datetime
     model_config = {"from_attributes": True}
 
+
 class CompanyScoreResponse(BaseModel):
     latest: Optional[CompanyScoreOut] = None
-    history: List[CompanyScoreOut] = []
+    history: List[CompanyScoreOut] = Field(default_factory=list)
 
 
-# --- CompanyArticle ---
 class CompanyArticleOut(BaseModel):
     company_id: int
     article_id: int
@@ -135,10 +137,10 @@ class ScrapedArticleCreate(BaseModel):
 
 class ScrapedCompanyCreate(BaseModel):
     name: str
-    aliases: List[str] = []
+    aliases: List[str] = Field(default_factory=list)
     article_count: Optional[int] = None
-    articles: List[ScrapedArticleCreate] = []
-    history_points: Optional[int] = None  # ile punktów historii score wygenerować (None = 1)
+    articles: List[ScrapedArticleCreate] = Field(default_factory=list)
+    history_points: Optional[int] = None  # generated score history points (None = 1)
 
 
 class ScrapedImportRequest(BaseModel):

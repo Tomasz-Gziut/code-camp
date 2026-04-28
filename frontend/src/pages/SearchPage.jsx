@@ -1,43 +1,18 @@
 import React from "react";
-import { getFirms } from "../api/firmsApi";
 import Highlight from "../components/Highlight";
 import Link from "../components/Link";
 import RadarChart from "../components/RadarChart";
 import { Badge, ScoreMeter } from "../components/ScoreBadge";
+import { useFirms } from "../hooks/useFirms";
 import { firmPath, normalize, scoreFirm, scoreToMeterColor } from "../utils/firmUtils";
 
 export default function SearchPage() {
-  const [firms, setFirms] = React.useState([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
+  const { firms, error, isLoading } = useFirms();
   const [query, setQuery] = React.useState("");
   const inputRef = React.useRef(null);
 
   React.useEffect(() => {
     inputRef.current?.focus?.();
-  }, []);
-
-  React.useEffect(() => {
-    let isActive = true;
-    setIsLoading(true);
-    setError(null);
-    getFirms()
-      .then((items) => {
-        if (!isActive) return;
-        setFirms(Array.isArray(items) ? items : []);
-      })
-      .catch((err) => {
-        if (!isActive) return;
-        setError(err);
-        setFirms([]);
-      })
-      .finally(() => {
-        if (!isActive) return;
-        setIsLoading(false);
-      });
-    return () => {
-      isActive = false;
-    };
   }, []);
 
   const matches = React.useMemo(() => {

@@ -1,9 +1,9 @@
 import React from "react";
-import { getFirmById } from "../api/firmsApi";
 import CategoryRow from "../components/CategoryRow";
 import Link from "../components/Link";
 import RadarChart from "../components/RadarChart";
 import { Badge, ScoreMeter } from "../components/ScoreBadge";
+import { useFirm } from "../hooks/useFirm";
 import { clampScore, scoreToMeterColor } from "../utils/firmUtils";
 
 function ChevronIcon({ direction = "left" }) {
@@ -40,39 +40,11 @@ function formatSnapshotDate(value) {
 }
 
 export default function FirmPage({ firmId }) {
-  const [firm, setFirm] = React.useState(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
+  const { firm, error, isLoading } = useFirm(firmId);
   const [selectedSnapshotId, setSelectedSnapshotId] = React.useState(null);
 
   React.useEffect(() => {
-    let isActive = true;
-    setIsLoading(true);
-    setError(null);
-    setFirm(null);
     setSelectedSnapshotId(null);
-
-    getFirmById(firmId)
-      .then((data) => {
-        if (!isActive) return;
-        setFirm(data ?? null);
-      })
-      .catch((err) => {
-        if (!isActive) return;
-        if (err?.status === 404) {
-          setFirm(null);
-          return;
-        }
-        setError(err);
-      })
-      .finally(() => {
-        if (!isActive) return;
-        setIsLoading(false);
-      });
-
-    return () => {
-      isActive = false;
-    };
   }, [firmId]);
 
   const scoreHistory = firm?.scoreHistory ?? [];
